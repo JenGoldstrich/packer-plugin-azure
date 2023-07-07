@@ -5,13 +5,11 @@ package dtl
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	hashiVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
 
 	hashiLabsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/labs"
 	hashiDTLVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/virtualmachines"
@@ -25,7 +23,6 @@ import (
 type StepDeployTemplate struct {
 	client  *AzureClient
 	deploy  func(ctx context.Context, resourceGroupName string, deploymentName string, state multistep.StateBag) error
-	disk    func(ctx context.Context, subscriptionId string, resourceGroupName string, computeName string) (string, string, error)
 	say     func(message string)
 	error   func(e error)
 	config  *Config
@@ -44,7 +41,6 @@ func NewStepDeployTemplate(client *AzureClient, ui packersdk.Ui, config *Config,
 	}
 
 	step.deploy = step.deployTemplate
-	step.disk = step.getImageDetails
 	return step
 }
 
@@ -173,37 +169,6 @@ func (s *StepDeployTemplate) Run(ctx context.Context, state multistep.StateBag) 
 	return processStepResult(
 		s.deploy(ctx, resourceGroupName, s.name, state),
 		s.error, state)
-}
-
-func (s *StepDeployTemplate) getImageDetails(ctx context.Context, subscriptionId string, resourceGroupName string, computeName string) (string, string, error) {
-	//We can't depend on constants.ArmOSDiskVhd being set
-	var imageName, imageType string
-	vmID := hashiVMSDK.NewVirtualMachineID(subscriptionId, resourceGroupName, computeName)
-	vm, err := s.client.VirtualMachinesClient.Get(ctx, vmID, hashiVMSDK.DefaultGetOperationOptions())
-	if err != nil {
-		return imageName, imageType, err
-	}
-	if err != nil {
-		s.say(s.client.LastError.Error())
-		return "", "", err
-	}
-	if model := vm.Model; model == nil {
-		return "", "", errors.New("TODO")
-	}
-	if vm.Model.Properties.StorageProfile.OsDisk.Vhd != nil {
-		imageType = "image"
-		imageName = *vm.Model.Properties.StorageProfile.OsDisk.Vhd.Uri
-		return imageType, imageName, nil
-	}
-
-	if vm.Model.Properties.StorageProfile.OsDisk.ManagedDisk.Id == nil {
-		return "", "", fmt.Errorf("unable to obtain a OS disk for %q, please check that the instance has been created", computeName)
-	}
-
-	imageType = "Microsoft.Compute/disks"
-	imageName = *vm.Model.Properties.StorageProfile.OsDisk.ManagedDisk.Id
-
-	return imageType, imageName, nil
 }
 
 func (s *StepDeployTemplate) Cleanup(state multistep.StateBag) {
