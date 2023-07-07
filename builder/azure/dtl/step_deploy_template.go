@@ -7,16 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	hashiVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
-	hashiDisksSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
-	hashiNetworkSecurityGroupsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/network/2022-09-01/networksecuritygroups"
-	hashiVirtualNetworksSDK "github.com/hashicorp/go-azure-sdk/resource-manager/network/2022-09-01/virtualnetworks"
-	giovanniBlobStorageSDK "github.com/tombuildsstuff/giovanni/storage/2020-08-04/blob/blobs"
 
 	hashiLabsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/labs"
 	hashiDTLVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/virtualmachines"
@@ -27,16 +22,14 @@ import (
 )
 
 type StepDeployTemplate struct {
-	client     *AzureClient
-	deploy     func(ctx context.Context, resourceGroupName string, deploymentName string, state multistep.StateBag) error
-	delete     func(ctx context.Context, client *AzureClient, subscriptionID, resourceType string, resourceName string, resourceGroupName string) error
-	disk       func(ctx context.Context, subscriptionId string, resourceGroupName string, computeName string) (string, string, error)
-	deleteDisk func(ctx context.Context, imageName string, resourceGroupName string, isManagedDisk bool, subscriptionId string, storageAccountName string) error
-	say        func(message string)
-	error      func(e error)
-	config     *Config
-	factory    templateFactoryFuncDtl
-	name       string
+	client  *AzureClient
+	deploy  func(ctx context.Context, resourceGroupName string, deploymentName string, state multistep.StateBag) error
+	disk    func(ctx context.Context, subscriptionId string, resourceGroupName string, computeName string) (string, string, error)
+	say     func(message string)
+	error   func(e error)
+	config  *Config
+	factory templateFactoryFuncDtl
+	name    string
 }
 
 func NewStepDeployTemplate(client *AzureClient, ui packersdk.Ui, config *Config, deploymentName string, factory templateFactoryFuncDtl) *StepDeployTemplate {
@@ -50,9 +43,7 @@ func NewStepDeployTemplate(client *AzureClient, ui packersdk.Ui, config *Config,
 	}
 
 	step.deploy = step.deployTemplate
-	step.delete = deleteResource
 	step.disk = step.getImageDetails
-	step.deleteDisk = step.deleteImage
 	return step
 }
 
@@ -143,9 +134,10 @@ func (s *StepDeployTemplate) deployTemplate(ctx context.Context, resourceGroupNa
 		for {
 			err := s.client.DtlMetaClient.VirtualMachines.ApplyArtifactsThenPoll(ctx, vmResourceId, dtlArtifactsRequest)
 			if err != nil {
-				s.say("WinRM artifact deployment failed, sleeping a minute and retrying")
-				time.Sleep(60 * time.Second)
+				s.say(fmt.Sprintf("WinRM artifact deployment failed, sleeping 5 seconds and retrying %s", err.Error()))
+				time.Sleep(5 * time.Second)
 			}
+			break
 		}
 	}
 
@@ -203,66 +195,7 @@ func (s *StepDeployTemplate) getImageDetails(ctx context.Context, subscriptionId
 	return imageType, imageName, nil
 }
 
-func deleteResource(ctx context.Context, client *AzureClient, subscriptionId string, resourceType string, resourceName string, resourceGroupName string) error {
-	switch resourceType {
-	case "Microsoft.Compute/virtualMachines":
-		vmID := hashiVMSDK.NewVirtualMachineID(subscriptionId, resourceGroupName, resourceName)
-		if err := client.VirtualMachinesClient.DeleteThenPoll(ctx, vmID, hashiVMSDK.DefaultDeleteOperationOptions()); err != nil {
-			return err
-		}
-	case "Microsoft.KeyVault/vaults":
-		id := commonids.NewKeyVaultID(subscriptionId, resourceGroupName, resourceName)
-		_, err := client.VaultsClient.Delete(ctx, id)
-		return err
-	case "Microsoft.Network/networkInterfaces":
-		interfaceID := commonids.NewNetworkInterfaceID(subscriptionId, resourceGroupName, resourceName)
-		err := client.NetworkMetaClient.NetworkInterfaces.DeleteThenPoll(ctx, interfaceID)
-		return err
-	case "Microsoft.Network/virtualNetworks":
-		vnetID := hashiVirtualNetworksSDK.NewVirtualNetworkID(subscriptionId, resourceGroupName, resourceName)
-		err := client.NetworkMetaClient.VirtualNetworks.DeleteThenPoll(ctx, vnetID)
-		return err
-	case "Microsoft.Network/networkSecurityGroups":
-		secGroupId := hashiNetworkSecurityGroupsSDK.NewNetworkSecurityGroupID(subscriptionId, resourceGroupName, resourceName)
-		err := client.NetworkMetaClient.NetworkSecurityGroups.DeleteThenPoll(ctx, secGroupId)
-		return err
-	case "Microsoft.Network/publicIPAddresses":
-		ipID := commonids.NewPublicIPAddressID(subscriptionId, resourceGroupName, resourceName)
-		err := client.NetworkMetaClient.PublicIPAddresses.DeleteThenPoll(ctx, ipID)
-		return err
-	}
-	return nil
-}
-
-func (s *StepDeployTemplate) deleteImage(ctx context.Context, imageName string, resourceGroupName string, isManagedDisk bool, subscriptionId string, storageAccountName string) error {
-	// Managed disk
-	if isManagedDisk {
-		xs := strings.Split(imageName, "/")
-		diskName := xs[len(xs)-1]
-		diskId := hashiDisksSDK.NewDiskID(subscriptionId, resourceGroupName, diskName)
-
-		if err := s.client.DisksClient.DeleteThenPoll(ctx, diskId); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	// VHD image
-	u, err := url.Parse(imageName)
-	if err != nil {
-		return err
-	}
-	xs := strings.Split(u.Path, "/")
-	var blobName = strings.Join(xs[2:], "/")
-	if len(xs) < 3 {
-		return errors.New("Unable to parse path of image " + imageName)
-	}
-	_, err = s.client.GiovanniBlobClient.Delete(ctx, storageAccountName, "images", blobName, giovanniBlobStorageSDK.DeleteInput{})
-	return err
-}
-
 func (s *StepDeployTemplate) Cleanup(state multistep.StateBag) {
-	//Only clean up if this was an existing resource group and the resource group
-	//is marked as created
-	// Just return now
+	// TODO are there any resources created in DTL builds we should tear down?
+	// There was teardown code from the ARM builder copy pasted in but it was never called
 }

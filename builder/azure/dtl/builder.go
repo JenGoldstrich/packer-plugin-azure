@@ -32,6 +32,8 @@ type Builder struct {
 	runner   multistep.Runner
 }
 
+var ErrNoImage = errors.New("failed to find shared image gallery id in state")
+
 const (
 	DefaultSasBlobContainer = "system/Microsoft.Compute"
 	DefaultSecretName       = "packerKeyVaultSecret"
@@ -266,11 +268,11 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		return nil, errors.New("Build was halted.")
 	}
 
-	if b.config.isManagedImage() {
-		managedImageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/images/%s", b.config.ClientConfig.SubscriptionID, b.config.ManagedImageResourceGroupName, b.config.ManagedImageName)
-		return NewManagedImageArtifact(b.config.OSType, b.config.ManagedImageResourceGroupName, b.config.ManagedImageName, b.config.Location, managedImageID)
+	managedImageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/images/%s", b.config.ClientConfig.SubscriptionID, b.config.ManagedImageResourceGroupName, b.config.ManagedImageName)
+	if b.config.isPublishToSIG() {
+		return b.managedImageArtifactWithSIGAsDestination(managedImageID)
 	}
-	return &Artifact{}, nil
+	return NewManagedImageArtifact(b.config.OSType, b.config.ManagedImageResourceGroupName, b.config.ManagedImageName, b.config.Location, managedImageID)
 }
 
 func (b *Builder) writeSSHPrivateKey(ui packersdk.Ui, debugKeyPath string) {
@@ -361,4 +363,20 @@ func (b *Builder) getSubnetInformation(ctx context.Context, ui packersdk.Ui, azC
 
 func normalizeAzureRegion(name string) string {
 	return strings.ToLower(strings.Replace(name, " ", "", -1))
+}
+
+func (b *Builder) managedImageArtifactWithSIGAsDestination(managedImageID string) (*Artifact, error) {
+	destinationSharedImageGalleryId := ""
+	if galleryID, ok := b.stateBag.GetOk(constants.ArmManagedImageSharedGalleryId); ok {
+		destinationSharedImageGalleryId = galleryID.(string)
+	} else {
+		return nil, ErrNoImage
+	}
+
+	return NewManagedImageArtifactWithSIGAsDestination(b.config.OSType,
+		b.config.ManagedImageResourceGroupName,
+		b.config.ManagedImageName,
+		b.config.Location,
+		managedImageID,
+		destinationSharedImageGalleryId)
 }

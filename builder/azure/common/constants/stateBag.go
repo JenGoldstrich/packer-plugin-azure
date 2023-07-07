@@ -20,7 +20,6 @@ const (
 )
 
 const (
-	ArmCaptureTemplate            string = "arm.CaptureTemplate"
 	ArmComputeName                string = "arm.ComputeName"
 	ArmImageParameters            string = "arm.ImageParameters"
 	ArmCertificateUrl             string = "arm.CertificateUrl"

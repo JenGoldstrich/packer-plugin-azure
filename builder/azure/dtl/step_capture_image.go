@@ -16,7 +16,6 @@ import (
 type StepCaptureImage struct {
 	client              *AzureClient
 	captureManagedImage func(ctx context.Context) error
-	get                 func(client *AzureClient) *CaptureTemplate
 	config              *Config
 	say                 func(message string)
 	error               func(e error)
@@ -111,17 +110,6 @@ func (s *StepCaptureImage) Run(ctx context.Context, state multistep.StateBag) mu
 
 		return multistep.ActionHalt
 	}
-
-	// HACK(chrboum): I do not like this.  The capture method should be returning this value
-	// instead having to pass in another lambda.
-	//
-	// Having to resort to capturing the template via an inspector is hack, and once I can
-	// resolve that I can cleanup this code too.  See the comments in azure_client.go for more
-	// details.
-	// [paulmey]: autorest.Future now has access to the last http.Response, but I'm not sure if
-	// the body is still accessible.
-	template := s.get(s.client)
-	state.Put(constants.ArmCaptureTemplate, template)
 
 	return multistep.ActionContinue
 }
