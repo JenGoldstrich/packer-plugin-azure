@@ -129,6 +129,7 @@ func NewAzureClient(ctx context.Context, subscriptionID string,
 	azureClient.ImagesClient.Client.UserAgent = fmt.Sprintf("%s %s", useragent.String(version.AzurePluginVersion.FormattedVersion()), azureClient.ImagesClient.Client.UserAgent)
 	azureClient.ImagesClient.Client.PollingDuration = PollingDuration
 
+	// TODO Request/Response inpectors for Track 2
 	networkMetaClient, err := hashiNetworkSDK.NewClientWithBaseURI(cloud.ResourceManager, func(c *resourcemanager.Client) {
 		c.Client.Authorizer = resourceManagerAuthorizer
 		c.Client.UserAgent = "some-user-agent"
