@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/Azure/go-autorest/autorest/adal"
 	hashiGalleryImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
 	hashiDTLCustomImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/customimages"
 	hashiDTLLabsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/labs"
@@ -175,9 +174,6 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to fetch the Lab %s information in %s resource group", b.config.LabName, b.config.LabResourceGroupName)
 	}
-	if lab.Model == nil {
-
-	}
 	b.config.Location = *lab.Model.Location
 
 	if b.config.LabVirtualNetworkName == "" || b.config.LabSubnetName == "" {
@@ -336,10 +332,6 @@ func (b *Builder) setRuntimeParameters(stateBag multistep.StateBag) {
 
 func (b *Builder) setTemplateParameters(stateBag multistep.StateBag) {
 	stateBag.Put(constants.ArmVirtualMachineCaptureParameters, b.config.toVirtualMachineCaptureParameters())
-}
-
-func (b *Builder) getServicePrincipalToken(say func(string)) (*adal.ServicePrincipalToken, error) {
-	return b.config.ClientConfig.GetServicePrincipalToken(say, b.config.ClientConfig.CloudEnvironment().ResourceManagerEndpoint)
 }
 
 func (b *Builder) getSubnetInformation(ctx context.Context, ui packersdk.Ui, azClient AzureClient) (*string, *string, error) {

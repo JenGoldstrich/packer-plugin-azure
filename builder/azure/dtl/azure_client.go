@@ -5,14 +5,14 @@ package dtl
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/golang-jwt/jwt"
 	"math"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/golang-jwt/jwt"
 
 	"github.com/Azure/go-autorest/autorest"
 	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
@@ -49,20 +49,6 @@ type AzureClient struct {
 	hashiGalleryImageVersionsSDK.GalleryImageVersionsClient
 	hashiGalleryImagesSDK.GalleryImagesClient
 	DtlMetaClient hashiDTLSDK.Client
-}
-
-func getCaptureResponse(body string) *CaptureTemplate {
-	var operation CaptureOperation
-	err := json.Unmarshal([]byte(body), &operation)
-	if err != nil {
-		return nil
-	}
-
-	if operation.Properties != nil && operation.Properties.Output != nil {
-		return operation.Properties.Output
-	}
-
-	return nil
 }
 
 func errorCapture(client *AzureClient) autorest.RespondDecorator {

@@ -21,9 +21,7 @@ import (
 )
 
 type resourceResolver struct {
-	client                          *AzureClient
-	findVirtualNetworkResourceGroup func(*AzureClient, string) (string, error)
-	findVirtualNetworkSubnet        func(*AzureClient, string, string) (string, error)
+	client *AzureClient
 }
 
 func newResourceResolver(client *AzureClient) *resourceResolver {
@@ -49,12 +47,6 @@ func (s *resourceResolver) shouldResolveManagedImageName(c *Config) bool {
 	return c.CustomManagedImageName != ""
 }
 
-func getResourceGroupNameFromId(id string) string {
-	// "/subscriptions/3f499422-dd76-4114-8859-86d526c9deb6/resourceGroups/packer-Resource-Group-yylnwsl30j/providers/...
-	xs := strings.Split(id, "/")
-	return xs[4]
-}
-
 func findManagedImageByName(client *AzureClient, name, subscriptionId, resourceGroupName string) (*hashiImagesSDK.Image, error) {
 	id := commonids.NewResourceGroupID(subscriptionId, resourceGroupName)
 	images, err := client.ImagesClient.ListByResourceGroupComplete(context.TODO(), id)
@@ -67,6 +59,5 @@ func findManagedImageByName(client *AzureClient, name, subscriptionId, resourceG
 			return &image, nil
 		}
 	}
-
 	return nil, fmt.Errorf("Cannot find an image named '%s' in the resource group '%s'", name, resourceGroupName)
 }
