@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/constants"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
+	"github.com/hashicorp/packer-plugin-sdk/retry"
 )
 
 type StepDeployTemplate struct {
@@ -130,14 +131,24 @@ func (s *StepDeployTemplate) deployTemplate(ctx context.Context, resourceGroupNa
 		dtlArtifacts := []hashiDTLVMSDK.ArtifactInstallProperties{*winrmArtifact}
 		dtlArtifactsRequest := hashiDTLVMSDK.ApplyArtifactsRequest{Artifacts: &dtlArtifacts}
 
-		// TODO replaced infinite loop with one time try, this should not fail imo, maybe they were actually running into failures after polling?
-		for {
+		// TODO this was an infinite loop, I have seen apply artifacts fail
+		// But this needs a bit further validation into why it fails and
+		// How we can avoid the need for a retry backoff
+		// But a retry backoff is much more preferable to an infinite loop
+
+		retryConfig := retry.Config{
+			Tries:      5,
+			RetryDelay: (&retry.Backoff{InitialBackoff: 5 * time.Second, MaxBackoff: 60 * time.Second, Multiplier: 1.5}).Linear,
+		}
+		err = retryConfig.Run(ctx, func(ctx context.Context) error {
 			err := s.client.DtlMetaClient.VirtualMachines.ApplyArtifactsThenPoll(ctx, vmResourceId, dtlArtifactsRequest)
 			if err != nil {
-				s.say(fmt.Sprintf("WinRM artifact deployment failed, sleeping 5 seconds and retrying %s", err.Error()))
-				time.Sleep(5 * time.Second)
+				s.say("WinRM artifact deployment failed, retrying")
 			}
-			break
+			return nil
+		})
+		if err != nil {
+			return err
 		}
 	}
 
