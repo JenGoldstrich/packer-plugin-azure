@@ -126,7 +126,7 @@ func (p *Provisioner) Provision(ctx context.Context, ui packersdk.Ui, comm packe
 	}
 
 	// Pass in relevant auth information for hashicorp/go-azure-sdk
-	authOptions := dtlBuilder.NewSDKAuthOptions{
+	authOptions := client.NewSDKAuthOptions{
 		AuthType:       p.config.ClientConfig.AuthType(),
 		ClientID:       p.config.ClientConfig.ClientID,
 		ClientSecret:   p.config.ClientConfig.ClientSecret,

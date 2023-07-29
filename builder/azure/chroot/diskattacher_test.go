@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/Azure/go-autorest/autorest/to"
+	hashiDisksSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/stretchr/testify/assert"
@@ -38,43 +38,45 @@ func Test_DiskAttacherAttachesDiskToVM(t *testing.T) {
 	require.Nil(t, err, "Test needs to run on an Azure VM, unable to retrieve VM information")
 	t.Log("Creating new disk '", testDiskName, "' in ", vm.ResourceGroupName)
 
-	disk, err := azcli.DisksClient().Get(context.TODO(), vm.ResourceGroupName, testDiskName)
+	diskId := hashiDisksSDK.NewDiskID(azcli.SubscriptionID(), vm.ResourceGroupName, testDiskName)
+
+	disk, err := azcli.DisksClient().Get(context.TODO(), diskId)
 	if err == nil {
 		t.Log("Disk already exists")
-		if disk.DiskState == compute.DiskStateAttached {
+		if *disk.Model.Properties.DiskState == hashiDisksSDK.DiskStateAttached {
 			t.Log("Disk is attached, assuming to this machine, trying to detach")
-			err = da.DetachDisk(context.TODO(), to.String(disk.ID))
+			err = da.DetachDisk(context.TODO(), to.String(disk.Model.Id))
 			require.Nil(t, err)
 		}
 		t.Log("Deleting disk")
-		result, err := azcli.DisksClient().Delete(context.TODO(), vm.ResourceGroupName, testDiskName)
-		require.Nil(t, err)
-		err = result.WaitForCompletionRef(context.TODO(), azcli.PollClient())
+		err := azcli.DisksClient().DeleteThenPoll(context.TODO(), diskId)
 		require.Nil(t, err)
 	}
 
 	t.Log("Creating disk")
-	r, err := azcli.DisksClient().CreateOrUpdate(context.TODO(), vm.ResourceGroupName, testDiskName, compute.Disk{
-		Location: to.StringPtr(vm.Location),
-		Sku: &compute.DiskSku{
-			Name: compute.DiskStorageAccountTypesStandardLRS,
-		},
-		DiskProperties: &compute.DiskProperties{
-			DiskSizeGB:   to.Int32Ptr(30),
-			CreationData: &compute.CreationData{CreateOption: compute.DiskCreateOptionEmpty},
-		},
-	})
-	require.Nil(t, err)
-	err = r.WaitForCompletionRef(context.TODO(), azcli.PollClient())
+	var diskSizeInGb int64
+	diskSizeInGb = 30
+	diskSkuName := hashiDisksSDK.DiskStorageAccountTypesStandardLRS
+	err = azcli.DisksClient().CreateOrUpdateThenPoll(context.TODO(), diskId,
+		hashiDisksSDK.Disk{
+			Location: vm.Location,
+			Sku: &hashiDisksSDK.DiskSku{
+				Name: &diskSkuName,
+			},
+			Properties: &hashiDisksSDK.DiskProperties{
+				DiskSizeGB:   &diskSizeInGb,
+				CreationData: hashiDisksSDK.CreationData{CreateOption: hashiDisksSDK.DiskCreateOptionEmpty},
+			},
+		})
 	require.Nil(t, err)
 
 	t.Log("Retrieving disk properties")
-	d, err := azcli.DisksClient().Get(context.TODO(), vm.ResourceGroupName, testDiskName)
+	d, err := azcli.DisksClient().Get(context.TODO(), diskId)
 	require.Nil(t, err)
 	assert.NotNil(t, d)
 
 	t.Log("Attaching disk")
-	lun, err := da.AttachDisk(context.TODO(), to.String(d.ID))
+	lun, err := da.AttachDisk(context.TODO(), to.String(d.Model.Id))
 	assert.Nil(t, err)
 
 	t.Log("Waiting for device")
@@ -84,13 +86,10 @@ func Test_DiskAttacherAttachesDiskToVM(t *testing.T) {
 	t.Log("Device path:", dev)
 
 	t.Log("Detaching disk")
-	err = da.DetachDisk(context.TODO(), to.String(d.ID))
+	err = da.DetachDisk(context.TODO(), to.String(d.Model.Id))
 	require.Nil(t, err)
 
 	t.Log("Deleting disk")
-	result, err := azcli.DisksClient().Delete(context.TODO(), vm.ResourceGroupName, testDiskName)
-	if err == nil {
-		err = result.WaitForCompletionRef(context.TODO(), azcli.PollClient())
-	}
+	err = azcli.DisksClient().DeleteThenPoll(context.TODO(), diskId)
 	require.Nil(t, err)
 }

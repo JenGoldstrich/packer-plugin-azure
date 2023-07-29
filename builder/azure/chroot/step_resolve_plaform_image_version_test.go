@@ -42,9 +42,6 @@ func TestStepResolvePlatformImageVersion_Run(t *testing.T) {
 	})
 
 	state := new(multistep.BasicStateBag)
-	state.Put("azureclient", &client.AzureClientSetMock{
-		VirtualMachineImagesClientMock: client.VirtualMachineImagesClient{
-			VirtualMachineImagesClientAPI: m}})
 
 	ui, getErrs := testUI()
 	state.Put("ui", ui)

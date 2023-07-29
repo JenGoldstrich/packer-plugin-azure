@@ -16,7 +16,7 @@ func diskPathForLun(lun int32) string {
 	return fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", lun)
 }
 
-func (da diskAttacher) WaitForDevice(ctx context.Context, lun int32) (device string, err error) {
+func (da diskAttacher) WaitForDevice(ctx context.Context, lun int64) (device string, err error) {
 	path := diskPathForLun(lun)
 
 	for {

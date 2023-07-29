@@ -18,6 +18,7 @@ import (
 	hashiDTLVNETSDK "github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/virtualnetworks"
 	"github.com/hashicorp/hcl/v2/hcldec"
 	packerAzureCommon "github.com/hashicorp/packer-plugin-azure/builder/azure/common"
+	commonclient "github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/constants"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/lin"
 	"github.com/hashicorp/packer-plugin-sdk/communicator"
@@ -74,7 +75,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 	b.stateBag.Put(constants.Ui, ui)
 
 	// Pass in relevant auth information for hashicorp/go-azure-sdk
-	authOptions := NewSDKAuthOptions{
+	authOptions := commonclient.NewSDKAuthOptions{
 		AuthType:       b.config.ClientConfig.AuthType(),
 		ClientID:       b.config.ClientConfig.ClientID,
 		ClientSecret:   b.config.ClientConfig.ClientSecret,

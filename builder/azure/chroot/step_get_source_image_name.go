@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 
+	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -47,16 +48,17 @@ func (s *StepGetSourceImageName) Run(ctx context.Context, state multistep.StateB
 		}
 
 		client := azcli.GalleryImageVersionsClient()
-		image, err := client.Get(ctx, imageID.ResourceGroup, imageID.ResourceName[0], imageID.ResourceName[1], imageID.ResourceName[2], "")
+		imageVersionID := hashiGalleryImageVersionsSDK.NewImageVersionID(azcli.SubscriptionID(), imageID.ResourceGroup, imageID.ResourceName[0], imageID.ResourceName[1], imageID.ResourceName[2])
+		imageResult, err := client.Get(ctx, imageVersionID, hashiGalleryImageVersionsSDK.DefaultGetOperationOptions())
 		if err != nil {
 			log.Printf("[TRACE] error retrieving managed image name for shared source image %q: %v", s.SourceImageResourceID, err)
 			s.GeneratedData.Put("SourceImageName", "ERR_SOURCE_IMAGE_NAME_NOT_FOUND")
 			return multistep.ActionContinue
 		}
-
-		if image.GalleryImageVersionProperties != nil && image.GalleryImageVersionProperties.StorageProfile != nil &&
-			image.GalleryImageVersionProperties.StorageProfile.Source != nil && image.GalleryImageVersionProperties.StorageProfile.Source.ID != nil {
-			id := *image.GalleryImageVersionProperties.StorageProfile.Source.ID
+		image := imageResult.Model
+		if image.Properties != nil &&
+			image.Properties.StorageProfile.Source != nil && image.Properties.StorageProfile.Source.Id != nil {
+			id := *image.Properties.StorageProfile.Source.Id
 			ui.Say(fmt.Sprintf(" -> SourceImageName: '%s'", id))
 			s.GeneratedData.Put("SourceImageName", id)
 			return multistep.ActionContinue

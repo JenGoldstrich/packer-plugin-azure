@@ -9,9 +9,9 @@ import (
 	"log"
 	"sort"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
+	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -50,55 +50,54 @@ func (s *StepCreateImage) Run(ctx context.Context, state multistep.StateBag) mul
 		return multistep.ActionHalt
 	}
 
-	image := compute.Image{
-		Location: to.StringPtr(s.Location),
-		ImageProperties: &compute.ImageProperties{
-			StorageProfile: &compute.ImageStorageProfile{
-				OsDisk: &compute.ImageOSDisk{
-					OsState: compute.OperatingSystemStateTypes(s.ImageOSState),
-					OsType:  compute.OperatingSystemTypesLinux,
-					ManagedDisk: &compute.SubResource{
-						ID: &diskResourceID,
+	storageAccountType := hashiImagesSDK.StorageAccountTypes(s.OSDiskStorageAccountType)
+	cacheingType := hashiImagesSDK.CachingTypes(s.OSDiskCacheType)
+	image := hashiImagesSDK.Image{
+		Location: s.Location,
+		Properties: &hashiImagesSDK.ImageProperties{
+			StorageProfile: &hashiImagesSDK.ImageStorageProfile{
+				OsDisk: &hashiImagesSDK.ImageOSDisk{
+					OsState: hashiImagesSDK.OperatingSystemStateTypes(s.ImageOSState),
+					OsType:  hashiImagesSDK.OperatingSystemTypesLinux,
+					ManagedDisk: &hashiImagesSDK.SubResource{
+						Id: &diskResourceID,
 					},
-					StorageAccountType: compute.StorageAccountTypes(s.OSDiskStorageAccountType),
-					Caching:            compute.CachingTypes(s.OSDiskCacheType),
+					StorageAccountType: &storageAccountType,
+					Caching:            &cacheingType,
 				},
-				//	DataDisks:     nil,
-				//	ZoneResilient: nil,
 			},
 		},
-		//		Tags:            nil,
 	}
 
-	var datadisks []compute.ImageDataDisk
+	var datadisks []hashiImagesSDK.ImageDataDisk
+	if len(diskset) > 0 {
+		storageAccountType = hashiImagesSDK.StorageAccountTypes(s.DataDiskStorageAccountType)
+		cacheingType = hashiImagesSDK.CachingTypes(s.DataDiskStorageAccountType)
+	}
 	for lun, resource := range diskset {
 		if lun != -1 {
 			ui.Say(fmt.Sprintf("   using %q for data disk (lun %d).", resource, lun))
 
-			datadisks = append(datadisks, compute.ImageDataDisk{
-				Lun:                to.Int32Ptr(lun),
-				ManagedDisk:        &compute.SubResource{ID: to.StringPtr(resource.String())},
-				StorageAccountType: compute.StorageAccountTypes(s.DataDiskStorageAccountType),
-				Caching:            compute.CachingTypes(s.DataDiskCacheType),
+			datadisks = append(datadisks, hashiImagesSDK.ImageDataDisk{
+				Lun:                lun,
+				ManagedDisk:        &hashiImagesSDK.SubResource{Id: to.StringPtr(resource.String())},
+				StorageAccountType: &storageAccountType,
+				Caching:            &cacheingType,
 			})
 		}
 	}
 	if datadisks != nil {
 		sort.Slice(datadisks, func(i, j int) bool {
-			return *datadisks[i].Lun < *datadisks[j].Lun
+			return datadisks[i].Lun < datadisks[j].Lun
 		})
-		image.ImageProperties.StorageProfile.DataDisks = &datadisks
+		image.Properties.StorageProfile.DataDisks = &datadisks
 	}
 
-	f, err := azcli.ImagesClient().CreateOrUpdate(
+	id := hashiImagesSDK.NewImageID(azcli.SubscriptionID(), imageResource.ResourceGroup, imageResource.ResourceName)
+	err = azcli.ImagesClient().CreateOrUpdateThenPoll(
 		ctx,
-		imageResource.ResourceGroup,
-		imageResource.ResourceName,
+		id,
 		image)
-	if err == nil {
-		log.Println("Image creation in process...")
-		err = f.WaitForCompletionRef(ctx, azcli.PollClient())
-	}
 	if err != nil {
 		log.Printf("StepCreateImage.Run: error: %+v", err)
 		err := fmt.Errorf(
@@ -107,7 +106,7 @@ func (s *StepCreateImage) Run(ctx context.Context, state multistep.StateBag) mul
 		ui.Error(err.Error())
 		return multistep.ActionHalt
 	}
-	log.Printf("Image creation complete: %s", f.Status())
+	log.Printf("Image creation complete")
 
 	return multistep.ActionContinue
 }

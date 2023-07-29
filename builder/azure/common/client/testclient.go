@@ -16,10 +16,11 @@ func GetTestClientSet(t *testing.T) (AzureClientSet, error) {
 	if os.Getenv("AZURE_INTEGRATION_TEST") == "" {
 		t.Skip("AZURE_INTEGRATION_TEST not set")
 	} else {
-		a, err := auth.NewAuthorizerFromEnvironment()
+		_, err := auth.NewAuthorizerFromEnvironment()
 		if err == nil {
 			cli := azureClientSet{}
-			cli.authorizer = a
+			// cli.authorizer = a
+			panic("Not Implemented Yet")
 			cli.subscriptionID = os.Getenv("AZURE_SUBSCRIPTION_ID")
 			cli.PollingDelay = 0
 			cli.sender = http.DefaultClient

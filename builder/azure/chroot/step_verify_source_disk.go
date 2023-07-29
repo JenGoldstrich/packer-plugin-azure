@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/Azure/go-autorest/autorest/azure"
-	"github.com/Azure/go-autorest/autorest/to"
 
+	hashiDisksSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -54,8 +54,9 @@ func (s StepVerifySourceDisk) Run(ctx context.Context, state multistep.StateBag)
 		return multistep.ActionHalt
 	}
 
+	diskId := hashiDisksSDK.NewDiskID(azcli.SubscriptionID(), resource.ResourceGroup, resource.ResourceName)
 	disk, err := azcli.DisksClient().Get(ctx,
-		resource.ResourceGroup, resource.ResourceName)
+		diskId)
 	if err != nil {
 		err := fmt.Errorf("Unable to retrieve disk (%q): %s", s.SourceDiskResourceID, err)
 		log.Printf("StepVerifySourceDisk.Run: error: %+v", err)
@@ -64,7 +65,7 @@ func (s StepVerifySourceDisk) Run(ctx context.Context, state multistep.StateBag)
 		return multistep.ActionHalt
 	}
 
-	location := to.String(disk.Location)
+	location := disk.Model.Location
 	if !strings.EqualFold(location, s.Location) {
 		err := fmt.Errorf("Source disk resource %q is in a different location (%q) than this VM (%q). "+
 			"Packer does not know how to handle that.",

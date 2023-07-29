@@ -106,18 +106,18 @@ type fakeDiskAttacher struct {
 
 var _ DiskAttacher = &fakeDiskAttacher{}
 
-func (da *fakeDiskAttacher) AttachDisk(ctx context.Context, disk string) (lun int32, err error) {
+func (da *fakeDiskAttacher) AttachDisk(ctx context.Context, disk string) (lun int64, err error) {
 	if da.attachError != nil {
 		return 0, da.attachError
 	}
 	return 3, nil
 }
 
-func (da *fakeDiskAttacher) DiskPathForLun(lun int32) string {
+func (da *fakeDiskAttacher) DiskPathForLun(lun int64) string {
 	panic("not implemented")
 }
 
-func (da *fakeDiskAttacher) WaitForDevice(ctx context.Context, lun int32) (device string, err error) {
+func (da *fakeDiskAttacher) WaitForDevice(ctx context.Context, lun int64) (device string, err error) {
 	if da.waitForDeviceError != nil {
 		return "", da.waitForDeviceError
 	}

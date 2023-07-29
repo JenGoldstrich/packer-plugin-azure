@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/Azure/go-autorest/autorest/azure"
+	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/packer/registry/image"
@@ -85,14 +86,10 @@ func (a *Artifact) Destroy() error {
 
 		switch restype {
 		case "microsoft.compute/images":
-			res, err := a.AzureClientSet.ImagesClient().Delete(ctx, id.ResourceGroup, id.ResourceName)
+			imageID := hashiImagesSDK.NewImageID(a.AzureClientSet.SubscriptionID(), id.ResourceGroup, id.ResourceName)
+			err := a.AzureClientSet.ImagesClient().DeleteThenPoll(ctx, imageID)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("Unable to initiate deletion of resource (%s): %v", resource, err))
-			} else {
-				err := res.WaitForCompletionRef(ctx, a.AzureClientSet.PollClient())
-				if err != nil {
-					errs = append(errs, fmt.Errorf("Unable to complete deletion of resource (%s): %v", resource, err))
-				}
 			}
 		default:
 			errs = append(errs, fmt.Errorf("Don't know how to delete resources of type %s (%s)", resource, restype))

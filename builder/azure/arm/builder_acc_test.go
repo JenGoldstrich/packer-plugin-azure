@@ -38,6 +38,7 @@ import (
 
 	hashiGalleryImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
 	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
+	commonclient "github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/acctest"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/retry"
@@ -363,7 +364,7 @@ func createTestAzureClient(t *testing.T) AzureClient {
 	// Use CLI auth for our test client
 	b.config.ClientConfig.UseAzureCLIAuth = true
 	_ = b.config.ClientConfig.FillParameters()
-	authOptions := NewSDKAuthOptions{
+	authOptions := commonclient.NewSDKAuthOptions{
 		AuthType:       b.config.ClientConfig.AuthType(),
 		ClientID:       b.config.ClientConfig.ClientID,
 		ClientSecret:   b.config.ClientConfig.ClientSecret,

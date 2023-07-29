@@ -9,8 +9,9 @@ import (
 	"log"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
 	"github.com/Azure/go-autorest/autorest/to"
+	hashiGalleryImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
+	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -52,35 +53,39 @@ func (s *StepVerifySharedImageSource) Run(ctx context.Context, state multistep.S
 	ui.Say(fmt.Sprintf("Validating that shared image version %q exists",
 		s.SharedImageID))
 
-	version, err := azcli.GalleryImageVersionsClient().Get(ctx,
+	galleryImageVersionID := hashiGalleryImageVersionsSDK.NewImageVersionID(
+		azcli.SubscriptionID(),
 		resource.ResourceGroup,
 		resource.ResourceName[0],
 		resource.ResourceName[1],
 		resource.ResourceName[2],
-		"")
+	)
+	version, err := azcli.GalleryImageVersionsClient().Get(ctx,
+		galleryImageVersionID,
+		hashiGalleryImageVersionsSDK.DefaultGetOperationOptions())
 
 	if err != nil {
 		return errorMessage("Error retrieving shared image version %q: %+v ", s.SharedImageID, err)
 	}
 
-	if version.ID == nil || *version.ID == "" {
+	if version.Model.Id == nil || *version.Model.Id == "" {
 		return errorMessage("Error retrieving shared image version %q: ID field in response is empty", s.SharedImageID)
 	}
 
-	if version.GalleryImageVersionProperties == nil ||
-		version.GalleryImageVersionProperties.PublishingProfile == nil ||
-		version.GalleryImageVersionProperties.PublishingProfile.TargetRegions == nil {
+	galleryImageVersion := version.Model
+	if galleryImageVersion.Properties == nil ||
+		galleryImageVersion.Properties.PublishingProfile == nil ||
+		galleryImageVersion.Properties.PublishingProfile.TargetRegions == nil {
 		return errorMessage("Could not retrieve shared image version properties for image %q.", s.SharedImageID)
 	}
 
-	targetLocations := make([]string, 0, len(*version.GalleryImageVersionProperties.PublishingProfile.TargetRegions))
+	targetLocations := make([]string, 0, len(*galleryImageVersion.Properties.PublishingProfile.TargetRegions))
 	vmLocation := client.NormalizeLocation(s.Location)
 	locationFound := false
-	for _, tr := range *version.GalleryImageVersionProperties.PublishingProfile.TargetRegions {
-		l := to.String(tr.Name)
-		l = client.NormalizeLocation(l)
-		targetLocations = append(targetLocations, l)
-		if strings.EqualFold(vmLocation, l) {
+	for _, tr := range *galleryImageVersion.Properties.PublishingProfile.TargetRegions {
+		location := client.NormalizeLocation(tr.Name)
+		targetLocations = append(targetLocations, location)
+		if strings.EqualFold(vmLocation, location) {
 			locationFound = true
 			break
 		}
@@ -91,32 +96,35 @@ func (s *StepVerifySharedImageSource) Run(ctx context.Context, state multistep.S
 	}
 
 	imageResource, _ := resource.Parent()
-	image, err := azcli.GalleryImagesClient().Get(ctx,
+	galleryImageID := hashiGalleryImagesSDK.NewGalleryImageID(
+		azcli.SubscriptionID(),
 		resource.ResourceGroup,
 		resource.ResourceName[0],
-		resource.ResourceName[1])
-
+		resource.ResourceName[1],
+	)
+	imageResponse, err := azcli.GalleryImagesClient().Get(ctx, galleryImageID)
+	image := imageResponse.Model
 	if err != nil {
 		return errorMessage("Error retrieving shared image %q: %+v ", imageResource.String(), err)
 	}
 
-	if image.ID == nil || *image.ID == "" {
+	if image.Id == nil || *image.Id == "" {
 		return errorMessage("Error retrieving shared image %q: ID field in response is empty", imageResource.String())
 	}
 
-	if image.GalleryImageProperties == nil {
+	if image.Properties == nil {
 		return errorMessage("Could not retrieve shared image properties for image %q.", imageResource.String())
 	}
 
 	log.Printf("StepVerifySharedImageSource:Run: Image %q, HvGen: %q, osState: %q",
-		to.String(image.ID),
-		image.GalleryImageProperties.HyperVGeneration,
-		image.GalleryImageProperties.OsState)
+		to.String(image.Id),
+		image.Properties.HyperVGeneration,
+		image.Properties.OsState)
 
-	if image.GalleryImageProperties.OsType != compute.OperatingSystemTypesLinux {
+	if image.Properties.OsType != hashiGalleryImagesSDK.OperatingSystemTypesLinux {
 		return errorMessage("The shared image (%q) is not a Linux image (found %q). Currently only Linux images are supported.",
-			to.String(image.ID),
-			image.GalleryImageProperties.OsType)
+			to.String(image.Id),
+			image.Properties.OsType)
 	}
 
 	ui.Say(fmt.Sprintf("Found image source image version %q, available in location %s",

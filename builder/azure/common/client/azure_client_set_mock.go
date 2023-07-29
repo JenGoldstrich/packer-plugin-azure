@@ -4,73 +4,66 @@
 package client
 
 import (
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute/computeapi"
-	"github.com/Azure/go-autorest/autorest"
+	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
+	hashiVMImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachineimages"
+	hashiVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
+	hashiDisksSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
+	hashiSnapshotsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/snapshots"
+	hashiGalleryImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
+	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 )
 
 var _ AzureClientSet = &AzureClientSetMock{}
 
 // AzureClientSetMock provides a generic mock for AzureClientSet
 type AzureClientSetMock struct {
-	DisksClientMock                     computeapi.DisksClientAPI
-	SnapshotsClientMock                 computeapi.SnapshotsClientAPI
-	ImagesClientMock                    computeapi.ImagesClientAPI
-	VirtualMachineImagesClientMock      VirtualMachineImagesClientAPI
-	VirtualMachinesClientMock           computeapi.VirtualMachinesClientAPI
-	VirtualMachineScaleSetVMsClientMock computeapi.VirtualMachineScaleSetVMsClientAPI
-	GalleryImagesClientMock             computeapi.GalleryImagesClientAPI
-	GalleryImageVersionsClientMock      computeapi.GalleryImageVersionsClientAPI
-	PollClientMock                      autorest.Client
-	MetadataClientMock                  MetadataClientAPI
-	SubscriptionIDMock                  string
+	DisksClientMock                hashiDisksSDK.DisksClient
+	SnapshotsClientMock            hashiSnapshotsSDK.SnapshotsClient
+	ImagesClientMock               hashiImagesSDK.ImagesClient
+	VirtualMachinesClientMock      hashiVMSDK.VirtualMachinesClient
+	VirtualMachineImagesClientMock hashiVMImagesSDK.VirtualMachineImagesClient
+	GalleryImagesClientMock        hashiGalleryImagesSDK.GalleryImagesClient
+	GalleryImageVersionsClientMock hashiGalleryImageVersionsSDK.GalleryImageVersionsClient
+	MetadataClientMock             MetadataClientAPI
+	SubscriptionIDMock             string
 }
 
-// DisksClient returns a DisksClientAPI
-func (m *AzureClientSetMock) DisksClient() computeapi.DisksClientAPI {
+// DisksClient returns a DisksClient
+func (m *AzureClientSetMock) DisksClient() hashiDisksSDK.DisksClient {
 	return m.DisksClientMock
 }
 
-// SnapshotsClient returns a SnapshotsClientAPI
-func (m *AzureClientSetMock) SnapshotsClient() computeapi.SnapshotsClientAPI {
+// SnapshotsClient returns a SnapshotsClient
+func (m *AzureClientSetMock) SnapshotsClient() hashiSnapshotsSDK.SnapshotsClient {
 	return m.SnapshotsClientMock
 }
 
-// ImagesClient returns a ImagesClientAPI
-func (m *AzureClientSetMock) ImagesClient() computeapi.ImagesClientAPI {
+// ImagesClient returns a ImagesClient
+func (m *AzureClientSetMock) ImagesClient() hashiImagesSDK.ImagesClient {
 	return m.ImagesClientMock
 }
 
-// VirtualMachineImagesClient returns a VirtualMachineImagesClientAPI
-func (m *AzureClientSetMock) VirtualMachineImagesClient() VirtualMachineImagesClientAPI {
+// VirtualMachineImagesClient returns a VirtualMachineImagesClient
+func (m *AzureClientSetMock) VirtualMachineImagesClient() hashiVMImagesSDK.VirtualMachineImagesClient {
 	return m.VirtualMachineImagesClientMock
 }
 
-// VirtualMachinesClient returns a VirtualMachinesClientAPI
-func (m *AzureClientSetMock) VirtualMachinesClient() computeapi.VirtualMachinesClientAPI {
+// VirtualMachinesClient returns a VirtualMachinesClient
+func (m *AzureClientSetMock) VirtualMachinesClient() hashiVMSDK.VirtualMachinesClient {
 	return m.VirtualMachinesClientMock
 }
 
-// VirtualMachineScaleSetVMsClient returns a VirtualMachineScaleSetVMsClientAPI
-func (m *AzureClientSetMock) VirtualMachineScaleSetVMsClient() computeapi.VirtualMachineScaleSetVMsClientAPI {
-	return m.VirtualMachineScaleSetVMsClientMock
-}
-
-// GalleryImagesClient returns a GalleryImagesClientAPI
-func (m *AzureClientSetMock) GalleryImagesClient() computeapi.GalleryImagesClientAPI {
+// GalleryImagesClient returns a GalleryImagesClient
+func (m *AzureClientSetMock) GalleryImagesClient() hashiGalleryImagesSDK.GalleryImagesClient {
 	return m.GalleryImagesClientMock
 }
 
-// GalleryImageVersionsClient returns a GalleryImageVersionsClientAPI
-func (m *AzureClientSetMock) GalleryImageVersionsClient() computeapi.GalleryImageVersionsClientAPI {
+// GalleryImageVersionsClient returns a GalleryImageVersionsClient
+func (m *AzureClientSetMock) GalleryImageVersionsClient() hashiGalleryImageVersionsSDK.GalleryImageVersionsClient {
 	return m.GalleryImageVersionsClientMock
 }
 
-// PollClient returns an autorest Client that can be used for polling async requests
-func (m *AzureClientSetMock) PollClient() autorest.Client {
-	return m.PollClientMock
-}
-
-// MetadataClient returns a MetadataClientAPI
+// MetadataClient returns a MetadataClient
 func (m *AzureClientSetMock) MetadataClient() MetadataClientAPI {
 	return m.MetadataClientMock
 }

@@ -8,13 +8,12 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
+	hashiSnapshotsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/snapshots"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
 	"github.com/Azure/go-autorest/autorest/to"
 )
 
@@ -62,31 +61,23 @@ func (s *StepCreateSnapshotset) Run(ctx context.Context, state multistep.StateBa
 
 		ui.Say(fmt.Sprintf("Creating snapshot %q", ssr))
 
-		snapshot := compute.Snapshot{
-			Location: to.StringPtr(s.Location),
-			SnapshotProperties: &compute.SnapshotProperties{
-				CreationData: &compute.CreationData{
-					CreateOption:     compute.DiskCreateOptionCopy,
-					SourceResourceID: to.StringPtr(resource.String()),
+		resourceID := resource.String()
+		snapshot := hashiSnapshotsSDK.Snapshot{
+			Location: s.Location,
+			Properties: &hashiSnapshotsSDK.SnapshotProperties{
+				CreationData: hashiSnapshotsSDK.CreationData{
+					CreateOption:     hashiSnapshotsSDK.DiskCreateOptionCopy,
+					SourceResourceId: &resourceID,
 				},
 				Incremental: to.BoolPtr(false),
 			},
 		}
-
-		f, err := azcli.SnapshotsClient().CreateOrUpdate(ctx, ssr.ResourceGroup, ssr.ResourceName.String(), snapshot)
+		snapshotSDKID := hashiSnapshotsSDK.NewSnapshotID(azcli.SubscriptionID(), ssr.ResourceGroup, ssr.ResourceName.String())
+		err = azcli.SnapshotsClient().CreateOrUpdateThenPoll(ctx, snapshotSDKID, snapshot)
 		if err != nil {
 			return errorMessage("error initiating snapshot %q: %v", ssr, err)
 		}
 
-		pollClient := azcli.PollClient()
-		pollClient.PollingDelay = 2 * time.Second
-		ctx, cancel := context.WithTimeout(ctx, time.Hour*12)
-		defer cancel()
-		err = f.WaitForCompletionRef(ctx, pollClient)
-
-		if err != nil {
-			return errorMessage("error creating snapshot '%s': %v", s.OSDiskSnapshotID, err)
-		}
 	}
 
 	return multistep.ActionContinue
@@ -99,13 +90,10 @@ func (s *StepCreateSnapshotset) Cleanup(state multistep.StateBag) {
 
 		for _, resource := range s.snapshots {
 
+			snapshotID := hashiSnapshotsSDK.NewSnapshotID(azcli.SubscriptionID(), resource.ResourceGroup, resource.ResourceName.String())
 			ui.Say(fmt.Sprintf("Removing any active SAS for snapshot %q", resource))
 			{
-				f, err := azcli.SnapshotsClient().RevokeAccess(context.TODO(), resource.ResourceGroup, resource.ResourceName.String())
-				if err == nil {
-					log.Printf("StepCreateSnapshotset.Cleanup: removing SAS...")
-					err = f.WaitForCompletionRef(context.TODO(), azcli.PollClient())
-				}
+				err := azcli.SnapshotsClient().RevokeAccessThenPoll(context.TODO(), snapshotID)
 				if err != nil {
 					log.Printf("StepCreateSnapshotset.Cleanup: error: %+v", err)
 					ui.Error(fmt.Sprintf("error deleting snapshot %q: %v.", resource, err))
@@ -114,11 +102,7 @@ func (s *StepCreateSnapshotset) Cleanup(state multistep.StateBag) {
 
 			ui.Say(fmt.Sprintf("Deleting snapshot %q", resource))
 			{
-				f, err := azcli.SnapshotsClient().Delete(context.TODO(), resource.ResourceGroup, resource.ResourceName.String())
-				if err == nil {
-					log.Printf("StepCreateSnapshotset.Cleanup: deleting snapshot...")
-					err = f.WaitForCompletionRef(context.TODO(), azcli.PollClient())
-				}
+				err := azcli.SnapshotsClient().DeleteThenPoll(context.TODO(), snapshotID)
 				if err != nil {
 					log.Printf("StepCreateSnapshotset.Cleanup: error: %+v", err)
 					ui.Error(fmt.Sprintf("error deleting snapshot %q: %v.", resource, err))

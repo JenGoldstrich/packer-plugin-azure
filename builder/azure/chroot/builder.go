@@ -88,7 +88,7 @@ type Config struct {
 
 	// Try to resize the OS disk to this size on the first copy. Disks can only be englarged. If not specified,
 	// the disk will keep its original size. Required when using `from_scratch`
-	OSDiskSizeGB int32 `mapstructure:"os_disk_size_gb"`
+	OSDiskSizeGB int64 `mapstructure:"os_disk_size_gb"`
 	// The [storage SKU](https://docs.microsoft.com/en-us/rest/api/compute/disks/createorupdate#diskstorageaccounttypes)
 	// to use for the OS Disk. Defaults to `Standard_LRS`.
 	OSDiskStorageAccountType string `mapstructure:"os_disk_storage_account_type"`
