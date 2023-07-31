@@ -112,7 +112,7 @@ func (s azureClientSet) DisksClient() hashiDisksSDK.DisksClient {
 }
 
 func (s azureClientSet) SnapshotsClient() hashiSnapshotsSDK.SnapshotsClient {
-	c := hashiSnapshotsSDK.NewSnapshotsClientWithBaseURI(s.subscriptionID)
+	c := hashiSnapshotsSDK.NewSnapshotsClientWithBaseURI(s.ResourceManagerEndpoint)
 	s.configureTrack1Client(&c.Client)
 	c.Client.PollingDelay = s.PollingDelay
 	return c
