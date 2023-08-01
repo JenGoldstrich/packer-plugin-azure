@@ -82,6 +82,9 @@ type Config struct {
 	UseAzureCLIAuth bool `mapstructure:"use_azure_cli_auth" required:"false"`
 }
 
+// allow override for unit tests
+var findTenantID = FindTenantID
+
 const (
 	AuthTypeMSI             = "ManagedIdentity"
 	AuthTypeClientSecret    = "ClientSecret"
@@ -267,19 +270,20 @@ func (c *Config) FillParameters() error {
 		}
 		c.SubscriptionID = subscriptionID
 	}
-	if c.TenantID == "" {
-		tenantID, err := findTenantID(*c.cloudEnvironment, c.SubscriptionID)
-		if err != nil {
-			return err
-		}
-		c.TenantID = tenantID
-	}
-
 	if c.cloudEnvironment == nil {
 		newCloudErr := c.setCloudEnvironment()
 		if newCloudErr != nil {
 			return newCloudErr
 		}
+	}
+
+	// CLI Auth does not require tenant, SDK parses that for us
+	if c.TenantID == "" && !c.UseAzureCLIAuth {
+		tenantID, err := findTenantID(*c.cloudEnvironment, c.SubscriptionID)
+		if err != nil {
+			return err
+		}
+		c.TenantID = tenantID
 	}
 
 	if c.ClientCertExpireTimeout == 0 {
@@ -320,6 +324,3 @@ func FindTenantID(env environments.Environment, subscriptionID string) (string, 
 	}
 	return m[1], nil
 }
-
-// allow override for unit tests
-var findTenantID = FindTenantID
