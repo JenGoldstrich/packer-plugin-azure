@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func diskPathForLun(lun int32) string {
+func diskPathForLun(lun int64) string {
 	return fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", lun)
 }
 
