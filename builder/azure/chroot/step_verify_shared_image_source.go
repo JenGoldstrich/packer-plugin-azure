@@ -143,7 +143,7 @@ func (s *StepVerifySharedImageSource) getGalleryVersion(ctx context.Context, azc
 	if err != nil {
 		return nil, err
 	}
-	if res.Model != nil {
+	if res.Model == nil {
 		return nil, fmt.Errorf("SDK returned empty model")
 	}
 	return res.Model, nil
@@ -154,7 +154,7 @@ func (s *StepVerifySharedImageSource) getGalleryImage(ctx context.Context, azcli
 	if err != nil {
 		return nil, err
 	}
-	if res.Model != nil {
+	if res.Model == nil {
 		return nil, fmt.Errorf("SDK returned empty model")
 	}
 	return res.Model, nil
