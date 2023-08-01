@@ -27,7 +27,7 @@ type StepVerifySharedImageDestination struct {
 	getImage     func(context.Context, client.AzureClientSet, hashiGalleryImagesSDK.GalleryImageId) (*hashiGalleryImagesSDK.GalleryImage, error)
 }
 
-func NewStepSharedImageDestination(step *StepVerifySharedImageDestination) *StepVerifySharedImageDestination {
+func NewStepVerifySharedImageDestination(step *StepVerifySharedImageDestination) *StepVerifySharedImageDestination {
 	step.getImage = step.getGalleryImage
 	step.listVersions = step.listGalleryVersions
 	return step

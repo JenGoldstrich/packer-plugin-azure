@@ -503,38 +503,41 @@ func buildsteps(
 	if hasValidSharedImage {
 		// validate destination early
 		addSteps(
-			&StepVerifySharedImageDestination{
-				Image:    config.SharedImageGalleryDestination,
-				Location: info.Location,
-			},
+			NewStepVerifySharedImageDestination(
+				&StepVerifySharedImageDestination{
+					Image:    config.SharedImageGalleryDestination,
+					Location: info.Location,
+				}),
 		)
 	}
 
 	if config.FromScratch {
-		addSteps(&StepCreateNewDiskset{
-			OSDiskID:                 config.TemporaryOSDiskID,
-			OSDiskSizeGB:             config.OSDiskSizeGB,
-			OSDiskStorageAccountType: config.OSDiskStorageAccountType,
-			HyperVGeneration:         config.ImageHyperVGeneration,
-			Location:                 info.Location})
+		addSteps(NewStepCreateNewDiskset(
+			&StepCreateNewDiskset{
+				OSDiskID:                 config.TemporaryOSDiskID,
+				OSDiskSizeGB:             config.OSDiskSizeGB,
+				OSDiskStorageAccountType: config.OSDiskStorageAccountType,
+				HyperVGeneration:         config.ImageHyperVGeneration,
+				Location:                 info.Location}))
 	} else {
 		switch config.sourceType {
 		case sourcePlatformImage:
 			if pi, err := client.ParsePlatformImageURN(config.Source); err == nil {
 				if strings.EqualFold(pi.Version, "latest") {
 					addSteps(
-						&StepResolvePlatformImageVersion{
+						NewStepResolvePlatformImageVersion(&StepResolvePlatformImageVersion{
 							PlatformImage: pi,
 							Location:      info.Location,
-						})
+						}),
+					)
 				}
 				addSteps(
-					&StepGetSourceImageName{
+					NewStepGetSourceImageName(&StepGetSourceImageName{
 						GeneratedData:       generatedData,
 						SourcePlatformImage: pi,
 						Location:            info.Location,
-					},
-					&StepCreateNewDiskset{
+					}),
+					NewStepCreateNewDiskset(&StepCreateNewDiskset{
 						OSDiskID:                 config.TemporaryOSDiskID,
 						OSDiskSizeGB:             config.OSDiskSizeGB,
 						OSDiskStorageAccountType: config.OSDiskStorageAccountType,
@@ -543,7 +546,7 @@ func buildsteps(
 						SourcePlatformImage:      pi,
 
 						SkipCleanup: config.SkipCleanup,
-					},
+					}),
 				)
 			} else {
 				panic("Couldn't parse platfrom image urn: " + config.Source + " err: " + err.Error())
@@ -551,16 +554,16 @@ func buildsteps(
 
 		case sourceDisk:
 			addSteps(
-				&StepVerifySourceDisk{
+				NewStepVerifySourceDisk(&StepVerifySourceDisk{
 					SourceDiskResourceID: config.Source,
 					Location:             info.Location,
-				},
-				&StepGetSourceImageName{
+				}),
+				NewStepGetSourceImageName(&StepGetSourceImageName{
 					GeneratedData:          generatedData,
 					SourceOSDiskResourceID: config.Source,
 					Location:               info.Location,
-				},
-				&StepCreateNewDiskset{
+				}),
+				NewStepCreateNewDiskset(&StepCreateNewDiskset{
 					OSDiskID:                 config.TemporaryOSDiskID,
 					OSDiskSizeGB:             config.OSDiskSizeGB,
 					OSDiskStorageAccountType: config.OSDiskStorageAccountType,
@@ -569,22 +572,22 @@ func buildsteps(
 					Location:                 info.Location,
 
 					SkipCleanup: config.SkipCleanup,
-				},
+				}),
 			)
 
 		case sourceSharedImage:
 			addSteps(
-				&StepVerifySharedImageSource{
+				NewStepVerifySharedImageSource(&StepVerifySharedImageSource{
 					SharedImageID:  config.Source,
 					SubscriptionID: info.SubscriptionID,
 					Location:       info.Location,
-				},
-				&StepGetSourceImageName{
+				}),
+				NewStepGetSourceImageName(&StepGetSourceImageName{
 					GeneratedData:         generatedData,
 					SourceImageResourceID: config.Source,
 					Location:              info.Location,
-				},
-				&StepCreateNewDiskset{
+				}),
+				NewStepCreateNewDiskset(&StepCreateNewDiskset{
 					OSDiskID:                   config.TemporaryOSDiskID,
 					DataDiskIDPrefix:           config.TemporaryDataDiskIDPrefix,
 					OSDiskSizeGB:               config.OSDiskSizeGB,
@@ -594,7 +597,7 @@ func buildsteps(
 					Location:                   info.Location,
 
 					SkipCleanup: config.SkipCleanup,
-				},
+				}),
 			)
 
 		default:
@@ -642,20 +645,20 @@ func buildsteps(
 	if hasValidSharedImage {
 		captureSteps = append(
 			captureSteps,
-			&StepCreateSnapshotset{
+			NewStepCreateSnapshotset(&StepCreateSnapshotset{
 				OSDiskSnapshotID:         config.TemporaryOSDiskSnapshotID,
 				DataDiskSnapshotIDPrefix: config.TemporaryDataDiskSnapshotIDPrefix,
 				Location:                 info.Location,
 				SkipCleanup:              config.SkipCleanup,
-			},
+			}),
 		)
 		captureSteps = append(
 			captureSteps,
-			&StepCreateSharedImageVersion{
+			NewStepCreateSharedImageVersion(&StepCreateSharedImageVersion{
 				Destination:     config.SharedImageGalleryDestination,
 				OSDiskCacheType: config.OSDiskCacheType,
 				Location:        info.Location,
-			},
+			}),
 		)
 	}
 
