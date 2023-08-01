@@ -59,9 +59,7 @@ func errorCapture(client *AzureClient) autorest.RespondDecorator {
 	}
 }
 
-// WAITING(chrboum): I have logged https://github.com/Azure/azure-sdk-for-go/issues/311 to get this
-// method included in the SDK.  It has been accepted, and I'll cut over to the official way
-// once it ships.
+// TODO Do we need a track 2 version of this method?
 func byConcatDecorators(decorators ...autorest.RespondDecorator) autorest.RespondDecorator {
 	return func(r autorest.Responder) autorest.Responder {
 		return autorest.DecorateResponder(r, decorators...)

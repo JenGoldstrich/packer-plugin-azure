@@ -26,6 +26,13 @@ type StepGetSourceImageName struct {
 
 	Location      string
 	GeneratedData *packerbuilderdata.GeneratedData
+
+	get func(context.Context, client.AzureClientSet, hashiGalleryImageVersionsSDK.ImageVersionId) (*hashiGalleryImageVersionsSDK.GalleryImageVersion, error)
+}
+
+func NewStepGetSourceImageName(step *StepGetSourceImageName) *StepGetSourceImageName {
+	step.get = step.getSharedImageGalleryVersion
+	return step
 }
 
 func (s *StepGetSourceImageName) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
@@ -47,15 +54,13 @@ func (s *StepGetSourceImageName) Run(ctx context.Context, state multistep.StateB
 			return multistep.ActionContinue
 		}
 
-		client := azcli.GalleryImageVersionsClient()
 		imageVersionID := hashiGalleryImageVersionsSDK.NewImageVersionID(azcli.SubscriptionID(), imageID.ResourceGroup, imageID.ResourceName[0], imageID.ResourceName[1], imageID.ResourceName[2])
-		imageResult, err := client.Get(ctx, imageVersionID, hashiGalleryImageVersionsSDK.DefaultGetOperationOptions())
+		image, err := s.get(ctx, azcli, imageVersionID)
 		if err != nil {
 			log.Printf("[TRACE] error retrieving managed image name for shared source image %q: %v", s.SourceImageResourceID, err)
 			s.GeneratedData.Put("SourceImageName", "ERR_SOURCE_IMAGE_NAME_NOT_FOUND")
 			return multistep.ActionContinue
 		}
-		image := imageResult.Model
 		if image.Properties != nil &&
 			image.Properties.StorageProfile.Source != nil && image.Properties.StorageProfile.Source.Id != nil {
 			id := *image.Properties.StorageProfile.Source.Id
@@ -76,6 +81,18 @@ func (s *StepGetSourceImageName) Run(ctx context.Context, state multistep.StateB
 	ui.Say(fmt.Sprintf(" -> SourceImageName: '%s'", imageID))
 	s.GeneratedData.Put("SourceImageName", imageID)
 	return multistep.ActionContinue
+}
+
+func (s *StepGetSourceImageName) getSharedImageGalleryVersion(ctx context.Context, azclient client.AzureClientSet, id hashiGalleryImageVersionsSDK.ImageVersionId) (*hashiGalleryImageVersionsSDK.GalleryImageVersion, error) {
+
+	imageVersionResult, err := azclient.GalleryImageVersionsClient().Get(ctx, id, hashiGalleryImageVersionsSDK.DefaultGetOperationOptions())
+	if err != nil {
+		return nil, err
+	}
+	if imageVersionResult.Model == nil {
+		return nil, fmt.Errorf("SDK returned empty model")
+	}
+	return imageVersionResult.Model, nil
 }
 
 func (*StepGetSourceImageName) Cleanup(multistep.StateBag) {

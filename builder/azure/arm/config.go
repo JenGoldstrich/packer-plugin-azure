@@ -483,7 +483,7 @@ type Config struct {
 	//
 	PlanInfo PlanInformation `mapstructure:"plan_info" required:"false"`
 	// The default PollingDuration for azure is 15mins, this property will override
-	// that value. See [Azure DefaultPollingDuration](https://godoc.org/github.com/Azure/go-autorest/autorest#pkg-constants)
+	// that value.
 	// If your Packer build is failing on the
 	// ARM deployment step with the error `Original Error:
 	// context deadline exceeded`, then you probably need to increase this timeout from

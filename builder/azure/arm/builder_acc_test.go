@@ -375,7 +375,7 @@ func createTestAzureClient(t *testing.T) AzureClient {
 	azureClient, _, err := NewAzureClient(
 		context.TODO(),
 		true,
-		b.config.ClientConfig.NewCloudEnvironment(),
+		b.config.ClientConfig.CloudEnvironment(),
 		b.config.SharedGalleryTimeout,
 		b.config.PollingDurationTimeout,
 		authOptions)

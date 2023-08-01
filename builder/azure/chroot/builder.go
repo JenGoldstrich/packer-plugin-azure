@@ -18,6 +18,8 @@ import (
 	"runtime"
 	"strings"
 
+	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
+	hashiVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
 	"github.com/hashicorp/hcl/v2/hcldec"
 	azcommon "github.com/hashicorp/packer-plugin-azure/builder/azure/common"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
@@ -30,8 +32,6 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-12-01/compute"
-	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -262,23 +262,23 @@ func (b *Builder) Prepare(raws ...interface{}) ([]string, []string, error) {
 	}
 
 	if b.config.OSDiskStorageAccountType == "" {
-		b.config.OSDiskStorageAccountType = string(compute.PremiumLRS)
+		b.config.OSDiskStorageAccountType = string(hashiVMSDK.StorageAccountTypesPremiumLRS)
 	}
 
 	if b.config.OSDiskCacheType == "" {
-		b.config.OSDiskCacheType = string(compute.CachingTypesReadOnly)
+		b.config.OSDiskCacheType = string(hashiVMSDK.CachingTypesReadOnly)
 	}
 
 	if b.config.DataDiskStorageAccountType == "" {
-		b.config.DataDiskStorageAccountType = string(compute.PremiumLRS)
+		b.config.DataDiskStorageAccountType = string(hashiVMSDK.StorageAccountTypesPremiumLRS)
 	}
 
 	if b.config.DataDiskCacheType == "" {
-		b.config.DataDiskCacheType = string(compute.CachingTypesReadOnly)
+		b.config.DataDiskCacheType = string(hashiVMSDK.CachingTypesReadOnly)
 	}
 
 	if b.config.ImageHyperVGeneration == "" {
-		b.config.ImageHyperVGeneration = string(compute.V1)
+		b.config.ImageHyperVGeneration = string(hashiVMSDK.HyperVGenerationTypeVOne)
 	}
 
 	// checks, accumulate any errors or warnings
@@ -333,10 +333,10 @@ func (b *Builder) Prepare(raws ...interface{}) ([]string, []string, error) {
 	}
 
 	if b.config.ImageResourceID != "" {
-		r, err := azure.ParseResourceID(b.config.ImageResourceID)
+		r, err := client.ParseResourceID(b.config.ImageResourceID)
 		if err != nil ||
 			!strings.EqualFold(r.Provider, "Microsoft.Compute") ||
-			!strings.EqualFold(r.ResourceType, "images") {
+			!strings.EqualFold(r.ResourceType.String(), "images") {
 			errs = packersdk.MultiErrorAppend(fmt.Errorf(
 				"image_resource_id: %q is not a valid image resource id", b.config.ImageResourceID))
 		}
@@ -371,33 +371,33 @@ func (b *Builder) Prepare(raws ...interface{}) ([]string, []string, error) {
 }
 
 func checkDiskCacheType(s string) interface{} {
-	for _, v := range compute.PossibleCachingTypesValues() {
-		if compute.CachingTypes(s) == v {
+	for _, v := range hashiVMSDK.PossibleValuesForCachingTypes() {
+		if string(hashiVMSDK.CachingTypes(s)) == v {
 			return nil
 		}
 	}
 	return fmt.Errorf("%q is not a valid value %v",
-		s, compute.PossibleCachingTypesValues())
+		s, hashiVMSDK.PossibleValuesForCachingTypes())
 }
 
 func checkStorageAccountType(s string) interface{} {
-	for _, v := range compute.PossibleDiskStorageAccountTypesValues() {
-		if compute.DiskStorageAccountTypes(s) == v {
+	for _, v := range hashiVMSDK.PossibleValuesForStorageAccountTypes() {
+		if string(hashiVMSDK.StorageAccountTypes(s)) == v {
 			return nil
 		}
 	}
 	return fmt.Errorf("%q is not a valid value %v",
-		s, compute.PossibleDiskStorageAccountTypesValues())
+		s, hashiVMSDK.PossibleValuesForStorageAccountTypes())
 }
 
 func checkHyperVGeneration(s string) interface{} {
-	for _, v := range compute.PossibleHyperVGenerationValues() {
-		if compute.HyperVGeneration(s) == v {
+	for _, v := range hashiVMSDK.PossibleValuesForHyperVGenerationType() {
+		if string(hashiVMSDK.HyperVGenerationType(s)) == v {
 			return nil
 		}
 	}
 	return fmt.Errorf("%q is not a valid value %v",
-		s, compute.PossibleHyperVGenerationValues())
+		s, hashiVMSDK.PossibleValuesForHyperVGenerationType())
 }
 
 func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook) (packersdk.Artifact, error) {
@@ -630,13 +630,13 @@ func buildsteps(
 	if config.ImageResourceID != "" {
 		captureSteps = append(
 			captureSteps,
-			&StepCreateImage{
+			NewStepCreateImage(&StepCreateImage{
 				ImageResourceID:          config.ImageResourceID,
-				ImageOSState:             string(compute.Generalized),
+				ImageOSState:             string(hashiImagesSDK.OperatingSystemStateTypesGeneralized),
 				OSDiskCacheType:          config.OSDiskCacheType,
 				OSDiskStorageAccountType: config.OSDiskStorageAccountType,
 				Location:                 info.Location,
-			},
+			}),
 		)
 	}
 	if hasValidSharedImage {

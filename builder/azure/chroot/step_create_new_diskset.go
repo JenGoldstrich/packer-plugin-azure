@@ -43,8 +43,16 @@ type StepCreateNewDiskset struct {
 	Location string
 
 	SkipCleanup bool
+
+	getVersion func(context.Context, client.AzureClientSet, hashiGalleryImageVersionsSDK.ImageVersionId) (*hashiGalleryImageVersionsSDK.GalleryImageVersion, error)
+	create     func(context.Context, client.AzureClientSet, hashiDisksSDK.DiskId, hashiDisksSDK.Disk) (polling.LongRunningPoller, error)
 }
 
+func NewStepCreateNewDiskset(step *StepCreateNewDiskset) *StepCreateNewDiskset {
+	step.getVersion = step.getSharedImageGalleryVersion
+	step.create = step.createDiskset
+	return step
+}
 func (s *StepCreateNewDiskset) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	azcli := state.Get("azureclient").(client.AzureClientSet)
 	ui := state.Get("ui").(packersdk.Ui)
@@ -73,7 +81,7 @@ func (s *StepCreateNewDiskset) Run(ctx context.Context, state multistep.StateBag
 
 	// Initiate disk creation
 	diskId := hashiDisksSDK.NewDiskID(azcli.SubscriptionID(), osDisk.ResourceGroup, osDisk.ResourceName.String())
-	response, err := azcli.DisksClient().CreateOrUpdate(ctx, diskId, disk)
+	response, err := s.create(ctx, azcli, diskId, disk)
 	if err != nil {
 		return errorMessage("Failed to initiate resource creation: %q", osDisk)
 	}
@@ -85,7 +93,7 @@ func (s *StepCreateNewDiskset) Run(ctx context.Context, state multistep.StateBag
 		client.Resource
 		polling.LongRunningPoller
 	}
-	futures := []Future{{osDisk, response.Poller}}
+	futures := []Future{{osDisk, response}}
 
 	if s.SourceImageResourceID != "" {
 		// retrieve image to see if there are any datadisks
@@ -100,11 +108,10 @@ func (s *StepCreateNewDiskset) Run(ctx context.Context, state multistep.StateBag
 		}
 		galleryImageVersionId := hashiGalleryImageVersionsSDK.NewImageVersionID(azcli.SubscriptionID(),
 			imageID.ResourceGroup, imageID.ResourceName[0], imageID.ResourceName[1], imageID.ResourceName[2])
-		imageResponse, err := azcli.GalleryImageVersionsClient().Get(ctx, galleryImageVersionId, hashiGalleryImageVersionsSDK.DefaultGetOperationOptions())
+		image, err := s.getVersion(ctx, azcli, galleryImageVersionId)
 		if err != nil {
 			return errorMessage("error retrieving source image %q: %v", imageID, err)
 		}
-		image := imageResponse.Model
 		if image.Properties != nil &&
 			image.Properties.StorageProfile.DataDiskImages != nil {
 			for _, ddi := range *image.Properties.StorageProfile.DataDiskImages {
@@ -116,7 +123,7 @@ func (s *StepCreateNewDiskset) Run(ctx context.Context, state multistep.StateBag
 				disk := s.getDatadiskDefinitionFromImage(ddi.Lun)
 				// Initiate disk creation
 				diskId := hashiDisksSDK.NewDiskID(azcli.SubscriptionID(), datadiskID.ResourceGroup, datadiskID.ResourceName.String())
-				f, err := azcli.DisksClient().CreateOrUpdate(ctx, diskId, disk)
+				f, err := s.create(ctx, azcli, diskId, disk)
 				if err != nil {
 					return errorMessage("Failed to initiate resource creation: %q", datadiskID)
 				}
@@ -124,7 +131,7 @@ func (s *StepCreateNewDiskset) Run(ctx context.Context, state multistep.StateBag
 				state.Put(stateBagKey_Diskset, s.disks) // update the statebag
 				ui.Say(fmt.Sprintf("Creating disk %q", datadiskID))
 
-				futures = append(futures, Future{datadiskID, f.Poller})
+				futures = append(futures, Future{datadiskID, f})
 			}
 		}
 	}
@@ -133,7 +140,10 @@ func (s *StepCreateNewDiskset) Run(ctx context.Context, state multistep.StateBag
 
 	// Wait for completion
 	for _, f := range futures {
-		f.LongRunningPoller.PollUntilDone()
+		error := f.LongRunningPoller.PollUntilDone()
+		if error != nil {
+			return errorMessage("Failed to create resource %q", f.Resource)
+		}
 		ui.Say(fmt.Sprintf("Disk %q created", f.Resource))
 	}
 
@@ -210,6 +220,26 @@ func (s StepCreateNewDiskset) getDatadiskDefinitionFromImage(lun int64) hashiDis
 		}
 	}
 	return disk
+}
+
+func (s *StepCreateNewDiskset) createDiskset(ctx context.Context, azcli client.AzureClientSet, id hashiDisksSDK.DiskId, disk hashiDisksSDK.Disk) (polling.LongRunningPoller, error) {
+	f, err := azcli.DisksClient().CreateOrUpdate(ctx, id, disk)
+	if err != nil {
+		return polling.LongRunningPoller{}, err
+	}
+	return f.Poller, nil
+}
+
+func (s *StepCreateNewDiskset) getSharedImageGalleryVersion(ctx context.Context, azclient client.AzureClientSet, id hashiGalleryImageVersionsSDK.ImageVersionId) (*hashiGalleryImageVersionsSDK.GalleryImageVersion, error) {
+
+	imageVersionResult, err := azclient.GalleryImageVersionsClient().Get(ctx, id, hashiGalleryImageVersionsSDK.DefaultGetOperationOptions())
+	if err != nil {
+		return nil, err
+	}
+	if imageVersionResult.Model == nil {
+		return nil, fmt.Errorf("SDK returned empty model")
+	}
+	return imageVersionResult.Model, nil
 }
 
 func (s *StepCreateNewDiskset) Cleanup(state multistep.StateBag) {

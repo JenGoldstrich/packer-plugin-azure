@@ -105,7 +105,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 	azureClient, objectID, err := NewAzureClient(
 		ctx,
 		(b.config.ResourceGroupName != "" || b.config.StorageAccount != ""),
-		b.config.ClientConfig.NewCloudEnvironment(),
+		b.config.ClientConfig.CloudEnvironment(),
 		b.config.SharedGalleryTimeout,
 		b.config.PollingDurationTimeout,
 		authOptions,
@@ -430,7 +430,7 @@ func (b *Builder) writeSSHPrivateKey(ui packersdk.Ui, debugKeyPath string) {
 }
 
 func (b *Builder) isPublicPrivateNetworkCommunication() bool {
-	return DefaultPrivateVirtualNetworkWithPublicIp != b.config.PrivateVirtualNetworkWithPublicIp
+	return b.config.PrivateVirtualNetworkWithPublicIp
 }
 
 func (b *Builder) isPrivateNetworkCommunication() bool {

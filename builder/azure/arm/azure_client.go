@@ -75,9 +75,7 @@ func errorCapture(client *AzureClient) autorest.RespondDecorator {
 	}
 }
 
-// WAITING(chrboum): I have logged https://github.com/Azure/azure-sdk-for-go/issues/311 to get this
-// method included in the SDK.  It has been accepted, and I'll cut over to the official way
-// once it ships.
+// TODO Do we need a track 2 version of this method?
 func byConcatDecorators(decorators ...autorest.RespondDecorator) autorest.RespondDecorator {
 	return func(r autorest.Responder) autorest.Responder {
 		return autorest.DecorateResponder(r, decorators...)
@@ -93,7 +91,7 @@ func NewAzureClient(ctx context.Context, isVHDBuild bool, cloud *environments.En
 	maxlen := getInspectorMaxLength()
 	if cloud == nil || cloud.ResourceManager == nil {
 		// TODO Throw error message that helps users solve this problem
-		return nil, nil, fmt.Errorf("Azure Environment not configured correctly")
+		return nil, nil, fmt.Errorf("azure environment not configured correctly")
 	}
 	resourceManagerEndpoint, _ := cloud.ResourceManager.Endpoint()
 	resourceManagerAuthorizer, err := commonclient.BuildResourceManagerAuthorizer(ctx, newSdkAuthOptions, *cloud)

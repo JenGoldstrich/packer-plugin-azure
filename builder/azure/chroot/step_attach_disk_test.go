@@ -7,13 +7,10 @@ import (
 	"context"
 	"errors"
 	"io/ioutil"
-	"net/http"
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-12-01/compute"
-	"github.com/Azure/go-autorest/autorest"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -69,15 +66,6 @@ func TestStepAttachDisk_Run(t *testing.T) {
 					ui:                 ui,
 				}
 			}
-
-			dm := compute.NewDisksClient("subscriptionId")
-			dm.Sender = autorest.SenderFunc(func(r *http.Request) (*http.Response, error) {
-				return &http.Response{
-					Request:    r,
-					Body:       ioutil.NopCloser(strings.NewReader(tt.fields.GetDiskResponseBody)),
-					StatusCode: tt.fields.GetDiskResponseCode,
-				}, nil
-			})
 
 			state := new(multistep.BasicStateBag)
 			state.Put("azureclient", &client.AzureClientSetMock{})

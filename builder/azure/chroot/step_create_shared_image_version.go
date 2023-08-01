@@ -9,7 +9,6 @@ import (
 	"log"
 	"sort"
 
-	"github.com/Azure/go-autorest/autorest/to"
 	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
@@ -22,6 +21,13 @@ type StepCreateSharedImageVersion struct {
 	OSDiskCacheType   string
 	DataDiskCacheType string
 	Location          string
+
+	create func(context.Context, client.AzureClientSet, hashiGalleryImageVersionsSDK.ImageVersionId, hashiGalleryImageVersionsSDK.GalleryImageVersion) error
+}
+
+func NewStepCreateSharedImageVersion(step *StepCreateSharedImageVersion) *StepCreateSharedImageVersion {
+	step.create = step.createImageVersion
+	return step
 }
 
 func (s *StepCreateSharedImageVersion) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
@@ -58,7 +64,7 @@ func (s *StepCreateSharedImageVersion) Run(ctx context.Context, state multistep.
 			},
 			PublishingProfile: &hashiGalleryImageVersionsSDK.GalleryArtifactPublishingProfileBase{
 				TargetRegions:     &targetRegions,
-				ExcludeFromLatest: to.BoolPtr(s.Destination.ExcludeFromLatest),
+				ExcludeFromLatest: common.BoolPtr(s.Destination.ExcludeFromLatest),
 			},
 		},
 	}
@@ -91,8 +97,9 @@ func (s *StepCreateSharedImageVersion) Run(ctx context.Context, state multistep.
 		s.Destination.ImageName,
 		s.Destination.ImageVersion,
 	)
-	err := azcli.GalleryImageVersionsClient().CreateOrUpdateThenPoll(
+	err := s.create(
 		ctx,
+		azcli,
 		galleryImageVersionID,
 		imageVersion)
 	if err != nil {
@@ -106,6 +113,13 @@ func (s *StepCreateSharedImageVersion) Run(ctx context.Context, state multistep.
 	log.Printf("Image creation complete")
 
 	return multistep.ActionContinue
+}
+
+func (s *StepCreateSharedImageVersion) createImageVersion(ctx context.Context, azcli client.AzureClientSet, galleryImageVersionID hashiGalleryImageVersionsSDK.ImageVersionId, imageVersion hashiGalleryImageVersionsSDK.GalleryImageVersion) error {
+	return azcli.GalleryImageVersionsClient().CreateOrUpdateThenPoll(
+		ctx,
+		galleryImageVersionID,
+		imageVersion)
 }
 
 func (*StepCreateSharedImageVersion) Cleanup(multistep.StateBag) {}

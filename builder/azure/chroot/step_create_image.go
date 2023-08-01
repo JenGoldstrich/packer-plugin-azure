@@ -9,9 +9,8 @@ import (
 	"log"
 	"sort"
 
-	"github.com/Azure/go-autorest/autorest/azure"
-	"github.com/Azure/go-autorest/autorest/to"
 	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
+	"github.com/hashicorp/packer-plugin-azure/builder/azure/common"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -27,6 +26,13 @@ type StepCreateImage struct {
 	DataDiskStorageAccountType string
 	DataDiskCacheType          string
 	Location                   string
+
+	create func(ctx context.Context, client client.AzureClientSet, id hashiImagesSDK.ImageId, image hashiImagesSDK.Image) error
+}
+
+func NewStepCreateImage(step *StepCreateImage) *StepCreateImage {
+	step.create = step.createImage
+	return step
 }
 
 func (s *StepCreateImage) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
@@ -39,7 +45,7 @@ func (s *StepCreateImage) Run(ctx context.Context, state multistep.StateBag) mul
 		s.ImageResourceID,
 		diskResourceID))
 
-	imageResource, err := azure.ParseResourceID(s.ImageResourceID)
+	imageResource, err := client.ParseResourceID(s.ImageResourceID)
 
 	if err != nil {
 		log.Printf("StepCreateImage.Run: error: %+v", err)
@@ -80,7 +86,7 @@ func (s *StepCreateImage) Run(ctx context.Context, state multistep.StateBag) mul
 
 			datadisks = append(datadisks, hashiImagesSDK.ImageDataDisk{
 				Lun:                lun,
-				ManagedDisk:        &hashiImagesSDK.SubResource{Id: to.StringPtr(resource.String())},
+				ManagedDisk:        &hashiImagesSDK.SubResource{Id: common.StringPtr(resource.String())},
 				StorageAccountType: &storageAccountType,
 				Caching:            &cacheingType,
 			})
@@ -93,9 +99,10 @@ func (s *StepCreateImage) Run(ctx context.Context, state multistep.StateBag) mul
 		image.Properties.StorageProfile.DataDisks = &datadisks
 	}
 
-	id := hashiImagesSDK.NewImageID(azcli.SubscriptionID(), imageResource.ResourceGroup, imageResource.ResourceName)
-	err = azcli.ImagesClient().CreateOrUpdateThenPoll(
+	id := hashiImagesSDK.NewImageID(azcli.SubscriptionID(), imageResource.ResourceGroup, imageResource.ResourceName.String())
+	err = s.create(
 		ctx,
+		azcli,
 		id,
 		image)
 	if err != nil {
@@ -109,6 +116,10 @@ func (s *StepCreateImage) Run(ctx context.Context, state multistep.StateBag) mul
 	log.Printf("Image creation complete")
 
 	return multistep.ActionContinue
+}
+
+func (s *StepCreateImage) createImage(ctx context.Context, client client.AzureClientSet, id hashiImagesSDK.ImageId, image hashiImagesSDK.Image) error {
+	return client.ImagesClient().CreateOrUpdateThenPoll(ctx, id, image)
 }
 
 func (*StepCreateImage) Cleanup(bag multistep.StateBag) {} // this is the final artifact, don't delete

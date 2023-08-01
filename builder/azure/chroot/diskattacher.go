@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/go-autorest/autorest/to"
 	hashiVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -198,7 +197,7 @@ func (da diskAttacher) setDisks(ctx context.Context, disks []hashiVMSDK.DataDisk
 func findDiskInList(list []hashiVMSDK.DataDisk, diskID string) *hashiVMSDK.DataDisk {
 	for _, disk := range list {
 		if disk.ManagedDisk != nil &&
-			strings.EqualFold(to.String(disk.ManagedDisk.Id), diskID) {
+			strings.EqualFold(*(disk.ManagedDisk.Id), diskID) {
 			return &disk
 		}
 	}

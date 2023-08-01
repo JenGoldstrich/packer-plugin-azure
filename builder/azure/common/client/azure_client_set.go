@@ -27,6 +27,7 @@ import (
 	version "github.com/hashicorp/packer-plugin-azure/version"
 )
 
+//go:generate mockery --name AzureClientSet
 type AzureClientSet interface {
 	MetadataClient() MetadataClientAPI
 
@@ -69,9 +70,9 @@ func new(c Config, say func(string)) (*azureClientSet, error) {
 		TenantID:       c.TenantID,
 		SubscriptionID: c.SubscriptionID,
 	}
-	cloudEnv := *c.newCloudEnvironment
+	cloudEnv := c.cloudEnvironment
 	resourceManagerEndpoint, _ := cloudEnv.ResourceManager.Endpoint()
-	authorizer, err := BuildResourceManagerAuthorizer(context.TODO(), authOptions, cloudEnv)
+	authorizer, err := BuildResourceManagerAuthorizer(context.TODO(), authOptions, *cloudEnv)
 	if err != nil {
 		return nil, err
 	}

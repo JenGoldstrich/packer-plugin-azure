@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/packer-plugin-sdk/common"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 )
 
@@ -34,8 +33,8 @@ func TestStepMountDevice_Run(t *testing.T) {
 	}
 
 	var gotCommand string
-	var wrapper common.CommandWrapper
-	wrapper = func(ran string) (string, error) {
+	//var wrapper common.CommandWrapper
+	wrapper := func(ran string) (string, error) {
 		gotCommand = ran
 		return "", nil
 	}

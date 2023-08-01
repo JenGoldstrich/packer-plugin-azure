@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Azure/go-autorest/autorest/to"
 	hashiDisksSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
 
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
@@ -45,7 +44,7 @@ func Test_DiskAttacherAttachesDiskToVM(t *testing.T) {
 		t.Log("Disk already exists")
 		if *disk.Model.Properties.DiskState == hashiDisksSDK.DiskStateAttached {
 			t.Log("Disk is attached, assuming to this machine, trying to detach")
-			err = da.DetachDisk(context.TODO(), to.String(disk.Model.Id))
+			err = da.DetachDisk(context.TODO(), *disk.Model.Id)
 			require.Nil(t, err)
 		}
 		t.Log("Deleting disk")
@@ -76,7 +75,7 @@ func Test_DiskAttacherAttachesDiskToVM(t *testing.T) {
 	assert.NotNil(t, d)
 
 	t.Log("Attaching disk")
-	lun, err := da.AttachDisk(context.TODO(), to.String(d.Model.Id))
+	lun, err := da.AttachDisk(context.TODO(), *d.Model.Id)
 	assert.Nil(t, err)
 
 	t.Log("Waiting for device")
@@ -86,7 +85,7 @@ func Test_DiskAttacherAttachesDiskToVM(t *testing.T) {
 	t.Log("Device path:", dev)
 
 	t.Log("Detaching disk")
-	err = da.DetachDisk(context.TODO(), to.String(d.Model.Id))
+	err = da.DetachDisk(context.TODO(), *d.Model.Id)
 	require.Nil(t, err)
 
 	t.Log("Deleting disk")

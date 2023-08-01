@@ -10,11 +10,10 @@ import (
 	"strings"
 
 	hashiSnapshotsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/snapshots"
+	"github.com/hashicorp/packer-plugin-azure/builder/azure/common"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
-
-	"github.com/Azure/go-autorest/autorest/to"
 )
 
 var _ multistep.Step = &StepCreateSnapshotset{}
@@ -27,6 +26,13 @@ type StepCreateSnapshotset struct {
 	SkipCleanup bool
 
 	snapshots Diskset
+
+	create func(context.Context, client.AzureClientSet, hashiSnapshotsSDK.SnapshotId, hashiSnapshotsSDK.Snapshot) error
+}
+
+func NewStepCreateSnapshotset(step *StepCreateSnapshotset) *StepCreateSnapshotset {
+	step.create = step.createSnapshot
+	return step
 }
 
 func (s *StepCreateSnapshotset) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
@@ -69,11 +75,11 @@ func (s *StepCreateSnapshotset) Run(ctx context.Context, state multistep.StateBa
 					CreateOption:     hashiSnapshotsSDK.DiskCreateOptionCopy,
 					SourceResourceId: &resourceID,
 				},
-				Incremental: to.BoolPtr(false),
+				Incremental: common.BoolPtr(false),
 			},
 		}
 		snapshotSDKID := hashiSnapshotsSDK.NewSnapshotID(azcli.SubscriptionID(), ssr.ResourceGroup, ssr.ResourceName.String())
-		err = azcli.SnapshotsClient().CreateOrUpdateThenPoll(ctx, snapshotSDKID, snapshot)
+		err = s.create(ctx, azcli, snapshotSDKID, snapshot)
 		if err != nil {
 			return errorMessage("error initiating snapshot %q: %v", ssr, err)
 		}
@@ -81,6 +87,10 @@ func (s *StepCreateSnapshotset) Run(ctx context.Context, state multistep.StateBa
 	}
 
 	return multistep.ActionContinue
+}
+
+func (s *StepCreateSnapshotset) createSnapshot(ctx context.Context, azcli client.AzureClientSet, id hashiSnapshotsSDK.SnapshotId, snapshot hashiSnapshotsSDK.Snapshot) error {
+	return azcli.SnapshotsClient().CreateOrUpdateThenPoll(ctx, id, snapshot)
 }
 
 func (s *StepCreateSnapshotset) Cleanup(state multistep.StateBag) {

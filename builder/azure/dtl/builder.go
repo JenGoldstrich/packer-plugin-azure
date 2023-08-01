@@ -88,7 +88,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 	azureClient, objectId, err := NewAzureClient(
 		ctx,
 		b.config.ClientConfig.SubscriptionID,
-		b.config.ClientConfig.NewCloudEnvironment(),
+		b.config.ClientConfig.CloudEnvironment(),
 		b.config.SharedGalleryTimeout,
 		b.config.CustomImageCaptureTimeout,
 		b.config.PollingDurationTimeout,

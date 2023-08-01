@@ -50,7 +50,7 @@ type Config struct {
 	VMName string `mapstructure:"vm_name" required:"true"`
 
 	// The default PollingDuration for azure is 15mins, this property will override
-	// that value. See [Azure DefaultPollingDuration](https://godoc.org/github.com/Azure/go-autorest/autorest#pkg-constants)
+	// that value.
 	// If your Packer build is failing on the
 	// ARM deployment step with the error `Original Error:
 	// context deadline exceeded`, then you probably need to increase this timeout from
@@ -139,7 +139,7 @@ func (p *Provisioner) Provision(ctx context.Context, ui packersdk.Ui, comm packe
 	azureClient, _, err := dtlBuilder.NewAzureClient(
 		ctx,
 		p.config.ClientConfig.SubscriptionID,
-		p.config.ClientConfig.NewCloudEnvironment(),
+		p.config.ClientConfig.CloudEnvironment(),
 		p.config.PollingDurationTimeout,
 		p.config.PollingDurationTimeout,
 		p.config.PollingDurationTimeout,

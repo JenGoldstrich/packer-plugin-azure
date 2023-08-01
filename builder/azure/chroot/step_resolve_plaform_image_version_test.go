@@ -5,45 +5,55 @@ package chroot
 
 import (
 	"context"
-	"io/ioutil"
-	"net/http"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
-	"github.com/Azure/go-autorest/autorest"
+	hashiVMImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachineimages"
 )
 
 func TestStepResolvePlatformImageVersion_Run(t *testing.T) {
 
+	var expectedSkuId, actualSkuId hashiVMImagesSDK.SkuId
+	expectedSku := "Linux"
+	expectedOffer := "Offer"
+	expectedPublisher := "Arch"
+	subscriptionID := "1234"
+	expectedLocation := "linuxland"
+	expectedSkuId = hashiVMImagesSDK.NewSkuID(subscriptionID, expectedLocation, expectedPublisher, expectedOffer, expectedSku)
+	var actualListOperations hashiVMImagesSDK.ListOperationOptions
+	returnedVMImages := []hashiVMImagesSDK.VirtualMachineImageResource{
+		{
+			Name: "1.2.3",
+		},
+		{
+			Name: "0.2.1",
+		},
+	}
 	pi := &StepResolvePlatformImageVersion{
 		PlatformImage: &client.PlatformImage{
-			Version: "latest",
-		}}
+			Version:   "latest",
+			Sku:       expectedSku,
+			Offer:     expectedOffer,
+			Publisher: expectedPublisher,
+		},
+		Location: expectedLocation,
+		list: func(ctx context.Context, azcli client.AzureClientSet, skuID hashiVMImagesSDK.SkuId, operations hashiVMImagesSDK.ListOperationOptions) (*[]hashiVMImagesSDK.VirtualMachineImageResource, error) {
 
-	m := compute.NewVirtualMachineImagesClient("subscriptionId")
-	m.Sender = autorest.SenderFunc(func(r *http.Request) (*http.Response, error) {
-		if !strings.Contains(r.URL.String(), "%24orderby=name+desc") {
-			t.Errorf("Expected url to use odata based sorting, but got %q", r.URL.String())
-		}
-		return &http.Response{
-			Request: r,
-			Body: ioutil.NopCloser(strings.NewReader(
-				`[
-					{"name":"1.2.3"},
-					{"name":"4.5.6"}
-				]`)),
-			StatusCode: 200,
-		}, nil
-	})
+			actualSkuId = skuID
+			actualListOperations = operations
+			return &returnedVMImages, nil
+		},
+	}
 
 	state := new(multistep.BasicStateBag)
 
-	ui, getErrs := testUI()
+	ui, _ := testUI()
+	state.Put("azureclient", &client.AzureClientSetMock{
+		SubscriptionIDMock: subscriptionID,
+	})
 	state.Put("ui", ui)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -57,6 +67,10 @@ func TestStepResolvePlatformImageVersion_Run(t *testing.T) {
 	if pi.PlatformImage.Version != "1.2.3" {
 		t.Errorf("Expected version '1.2.3', but got %q", pi.PlatformImage.Version)
 	}
-
-	_ = getErrs
+	if actualSkuId != expectedSkuId {
+		t.Fatalf("Expected sku ID %+v got sku ID %+v", expectedSkuId, actualSkuId)
+	}
+	if *actualListOperations.Orderby != "name desc" {
+		t.Fatalf("Expected name desc order by list operation, got %s", *actualListOperations.Orderby)
+	}
 }

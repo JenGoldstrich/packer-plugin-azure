@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	hashiSecretsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/keyvault/2023-02-01/secrets"
-	azcommon "github.com/hashicorp/packer-plugin-azure/builder/azure/common"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/constants"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 )
@@ -41,10 +40,6 @@ func TestNewStepCertificateInKeyVault(t *testing.T) {
 }
 
 func TestNewStepCertificateInKeyVault_error(t *testing.T) {
-	// Tell mock to return an error
-	cli := azcommon.MockAZVaultClient{}
-	cli.IsError = true
-
 	state := new(multistep.BasicStateBag)
 	state.Put(constants.ArmKeyVaultName, "testKeyVaultName")
 	state.Put(constants.ArmSubscription, "testSubscription")

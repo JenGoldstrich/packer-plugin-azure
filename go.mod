@@ -3,13 +3,11 @@ module github.com/hashicorp/packer-plugin-azure
 go 1.18
 
 require (
-	github.com/Azure/azure-sdk-for-go v66.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.29
-	github.com/Azure/go-autorest/autorest/adal v0.9.23
+	github.com/Azure/go-autorest/autorest/adal v0.9.23 // indirect
 	github.com/Azure/go-autorest/autorest/azure/auth v0.4.2
-	github.com/Azure/go-autorest/autorest/azure/cli v0.4.4
+	github.com/Azure/go-autorest/autorest/azure/cli v0.4.4 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
-	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/approvals/go-approval-tests v0.0.0-20210131072903-38d0b0ec12b1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/go-cmp v0.5.9
@@ -25,9 +23,7 @@ require (
 )
 
 require (
-	github.com/dimchansky/utfbom v1.1.1
 	github.com/hashicorp/go-azure-sdk v0.20230523.1140858
-	github.com/mitchellh/go-homedir v1.1.0
 	github.com/tombuildsstuff/giovanni v0.20.0
 )
 
@@ -50,6 +46,7 @@ require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/dylanmei/iso8601 v0.1.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/gofrs/flock v0.8.1 // indirect
@@ -98,6 +95,7 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-fs v0.0.0-20180402235330-b7b9ca407fff // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/iochan v1.0.0 // indirect
@@ -107,6 +105,7 @@ require (
 	github.com/pkg/sftp v1.13.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect

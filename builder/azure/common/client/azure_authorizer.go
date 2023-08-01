@@ -42,8 +42,6 @@ func BuildStorageAuthorizer(ctx context.Context, authOpts NewSDKAuthOptions, env
 func buildAuthorizer(ctx context.Context, authOpts NewSDKAuthOptions, env environments.Environment, api environments.Api) (auth.Authorizer, error) {
 	var authConfig auth.Credentials
 	switch authOpts.AuthType {
-	case AuthTypeDeviceLogin:
-		return nil, fmt.Errorf("DeviceLogin is not supported in v2 of the Azure Packer Plugin, however you can use the Azure CLI `az login --use-device-code` to use a device code, and then use CLI authentication")
 	case AuthTypeAzureCLI:
 		authConfig = auth.Credentials{
 			Environment:                       env,

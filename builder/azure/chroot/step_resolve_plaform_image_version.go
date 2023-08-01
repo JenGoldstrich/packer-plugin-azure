@@ -20,6 +20,12 @@ type StepResolvePlatformImageVersion struct {
 	*client.PlatformImage
 	ResourceGroupName string
 	Location          string
+	list              func(context.Context, client.AzureClientSet, hashiVMImagesSDK.SkuId, hashiVMImagesSDK.ListOperationOptions) (*[]hashiVMImagesSDK.VirtualMachineImageResource, error)
+}
+
+func NewStepResolvePlatformImageVersion(step *StepResolvePlatformImageVersion) *StepResolvePlatformImageVersion {
+	step.list = step.listVMImages
+	return step
 }
 
 // Run retrieves all available versions of a PIR image and stores the latest in the PlatformImage
@@ -32,8 +38,9 @@ func (pi *StepResolvePlatformImageVersion) Run(ctx context.Context, state multis
 		//vmi, err := azcli.VirtualMachineImagesClient().GetLatest(ctx, pi.Publisher, pi.Offer, pi.Sku, pi.Location)
 		vmMachineImagesSKUID := hashiVMImagesSDK.NewSkuID(azcli.SubscriptionID(), pi.Location, pi.Publisher, pi.Offer, pi.Sku)
 		orderBy := "name desc"
-		vmList, err := azcli.VirtualMachineImagesClient().List(
+		vmList, err := pi.list(
 			ctx,
+			azcli,
 			vmMachineImagesSKUID,
 			hashiVMImagesSDK.ListOperationOptions{
 				Orderby: &orderBy,
@@ -47,14 +54,14 @@ func (pi *StepResolvePlatformImageVersion) Run(ctx context.Context, state multis
 			return multistep.ActionHalt
 		}
 
-		if vmList.Model == nil || len(*vmList.Model) == 0 {
+		if len(*vmList) == 0 {
 			err := fmt.Errorf("%s:%s:%s:latest could not be found in location %s", pi.Publisher, pi.Offer, pi.Sku, pi.Location)
 			state.Put("error", err)
 			ui.Error(err.Error())
 			return multistep.ActionHalt
 		}
 
-		pi.Version = (*vmList.Model)[0].Name
+		pi.Version = (*vmList)[0].Name
 		ui.Say("Resolved latest version of source image: " + pi.Version)
 	} else {
 		ui.Say("Nothing to do, version is not 'latest'")
@@ -62,4 +69,19 @@ func (pi *StepResolvePlatformImageVersion) Run(ctx context.Context, state multis
 
 	return multistep.ActionContinue
 }
+func (s *StepResolvePlatformImageVersion) listVMImages(ctx context.Context, azcli client.AzureClientSet, skuID hashiVMImagesSDK.SkuId, operations hashiVMImagesSDK.ListOperationOptions) (*[]hashiVMImagesSDK.VirtualMachineImageResource, error) {
+	result, err := azcli.VirtualMachineImagesClient().List(
+		ctx,
+		skuID,
+		operations,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if result.Model != nil {
+		return nil, fmt.Errorf("SDK returned empty model")
+	}
+	return result.Model, nil
+}
+
 func (*StepResolvePlatformImageVersion) Cleanup(multistep.StateBag) {}
