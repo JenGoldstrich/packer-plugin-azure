@@ -78,7 +78,7 @@ func (s *StepResolvePlatformImageVersion) listVMImages(ctx context.Context, azcl
 	if err != nil {
 		return nil, err
 	}
-	if result.Model != nil {
+	if result.Model == nil {
 		return nil, fmt.Errorf("SDK returned empty model")
 	}
 	return result.Model, nil
