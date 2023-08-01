@@ -27,7 +27,6 @@ import (
 	version "github.com/hashicorp/packer-plugin-azure/version"
 )
 
-//go:generate mockery --name AzureClientSet
 type AzureClientSet interface {
 	MetadataClient() MetadataClientAPI
 

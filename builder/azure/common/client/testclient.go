@@ -19,9 +19,7 @@ func GetTestClientSet(t *testing.T) (AzureClientSet, error) {
 		_, err := auth.NewAuthorizerFromEnvironment()
 		if err == nil {
 			cli := azureClientSet{}
-			// cli.authorizer = a
-			panic("Not Implemented Yet")
-			cli.subscriptionID = os.Getenv("AZURE_SUBSCRIPTION_ID")
+			//	cli.authorizer =
 			cli.PollingDelay = 0
 			cli.sender = http.DefaultClient
 			return cli, nil
