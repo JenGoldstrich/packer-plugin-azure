@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
@@ -16,9 +16,9 @@ import (
 )
 
 func TestStepCreateSharedImageVersion_Run(t *testing.T) {
-	standardZRSStorageType := hashiGalleryImageVersionsSDK.StorageAccountTypeStandardZRS
-	hostCacheingRW := hashiGalleryImageVersionsSDK.HostCachingReadWrite
-	hostCacheingNone := hashiGalleryImageVersionsSDK.HostCachingNone
+	standardZRSStorageType := galleryimageversions.StorageAccountTypeStandardZRS
+	hostCacheingRW := galleryimageversions.HostCachingReadWrite
+	hostCacheingNone := galleryimageversions.HostCachingNone
 	subscriptionID := "12345"
 	type fields struct {
 		Destination       SharedImageGalleryDestination
@@ -31,8 +31,8 @@ func TestStepCreateSharedImageVersion_Run(t *testing.T) {
 		fields               fields
 		snapshotset          Diskset
 		want                 multistep.StepAction
-		expectedImageVersion hashiGalleryImageVersionsSDK.GalleryImageVersion
-		expectedImageId      hashiGalleryImageVersionsSDK.ImageVersionId
+		expectedImageVersion galleryimageversions.GalleryImageVersion
+		expectedImageId      galleryimageversions.ImageVersionId
 	}{
 		{
 			name: "happy path",
@@ -60,19 +60,19 @@ func TestStepCreateSharedImageVersion_Run(t *testing.T) {
 				"/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/snapshots/datadisksnapshot0",
 				"/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/snapshots/datadisksnapshot1",
 				"/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/snapshots/datadisksnapshot2"),
-			expectedImageId: hashiGalleryImageVersionsSDK.NewImageVersionID(
+			expectedImageId: galleryimageversions.NewImageVersionID(
 				subscriptionID,
 				"ResourceGroup",
 				"GalleryName",
 				"ImageName",
 				"0.1.2",
 			),
-			expectedImageVersion: hashiGalleryImageVersionsSDK.GalleryImageVersion{
+			expectedImageVersion: galleryimageversions.GalleryImageVersion{
 				Location: "region2",
-				Properties: &hashiGalleryImageVersionsSDK.GalleryImageVersionProperties{
-					PublishingProfile: &hashiGalleryImageVersionsSDK.GalleryArtifactPublishingProfileBase{
+				Properties: &galleryimageversions.GalleryImageVersionProperties{
+					PublishingProfile: &galleryimageversions.GalleryArtifactPublishingProfileBase{
 						ExcludeFromLatest: common.BoolPtr(true),
-						TargetRegions: &[]hashiGalleryImageVersionsSDK.TargetRegion{
+						TargetRegions: &[]galleryimageversions.TargetRegion{
 							{
 								Name:                 "region1",
 								RegionalReplicaCount: common.Int64Ptr(5),
@@ -80,32 +80,32 @@ func TestStepCreateSharedImageVersion_Run(t *testing.T) {
 							},
 						},
 					},
-					StorageProfile: hashiGalleryImageVersionsSDK.GalleryImageVersionStorageProfile{
-						OsDiskImage: &hashiGalleryImageVersionsSDK.GalleryDiskImage{
-							Source: &hashiGalleryImageVersionsSDK.GalleryDiskImageSource{
+					StorageProfile: galleryimageversions.GalleryImageVersionStorageProfile{
+						OsDiskImage: &galleryimageversions.GalleryDiskImage{
+							Source: &galleryimageversions.GalleryDiskImageSource{
 								Id: common.StringPtr("/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/snapshots/osdisksnapshot"),
 							},
 							HostCaching: &hostCacheingRW,
 						},
-						DataDiskImages: &[]hashiGalleryImageVersionsSDK.GalleryDataDiskImage{
+						DataDiskImages: &[]galleryimageversions.GalleryDataDiskImage{
 							{
 								HostCaching: &hostCacheingNone,
 								Lun:         0,
-								Source: &hashiGalleryImageVersionsSDK.GalleryDiskImageSource{
+								Source: &galleryimageversions.GalleryDiskImageSource{
 									Id: common.StringPtr("/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/snapshots/datadisksnapshot0"),
 								},
 							},
 							{
 								HostCaching: &hostCacheingNone,
 								Lun:         1,
-								Source: &hashiGalleryImageVersionsSDK.GalleryDiskImageSource{
+								Source: &galleryimageversions.GalleryDiskImageSource{
 									Id: common.StringPtr("/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/snapshots/datadisksnapshot1"),
 								},
 							},
 							{
 								HostCaching: &hostCacheingNone,
 								Lun:         2,
-								Source: &hashiGalleryImageVersionsSDK.GalleryDiskImageSource{
+								Source: &galleryimageversions.GalleryDiskImageSource{
 									Id: common.StringPtr("/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/snapshots/datadisksnapshot2"),
 								},
 							},
@@ -124,14 +124,14 @@ func TestStepCreateSharedImageVersion_Run(t *testing.T) {
 		state.Put(stateBagKey_Snapshotset, tt.snapshotset)
 
 		t.Run(tt.name, func(t *testing.T) {
-			var actualID hashiGalleryImageVersionsSDK.ImageVersionId
-			var actualImageVersion hashiGalleryImageVersionsSDK.GalleryImageVersion
+			var actualID galleryimageversions.ImageVersionId
+			var actualImageVersion galleryimageversions.GalleryImageVersion
 			s := &StepCreateSharedImageVersion{
 				Destination:       tt.fields.Destination,
 				OSDiskCacheType:   tt.fields.OSDiskCacheType,
 				DataDiskCacheType: tt.fields.DataDiskCacheType,
 				Location:          tt.fields.Location,
-				create: func(ctx context.Context, azcli client.AzureClientSet, id hashiGalleryImageVersionsSDK.ImageVersionId, imageVersion hashiGalleryImageVersionsSDK.GalleryImageVersion) error {
+				create: func(ctx context.Context, azcli client.AzureClientSet, id galleryimageversions.ImageVersionId, imageVersion galleryimageversions.GalleryImageVersion) error {
 					actualID = id
 					actualImageVersion = imageVersion
 					return nil

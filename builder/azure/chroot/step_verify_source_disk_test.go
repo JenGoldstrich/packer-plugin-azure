@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"testing"
 
-	hashiDisksSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 )
@@ -21,9 +21,9 @@ func Test_StepVerifySourceDisk_Run(t *testing.T) {
 		Location             string
 
 		GetDiskError    error
-		GetDiskResponse *hashiDisksSDK.Disk
+		GetDiskResponse *disks.Disk
 	}
-	diskWithCorrectLocation := hashiDisksSDK.Disk{
+	diskWithCorrectLocation := disks.Disk{
 		Location: "westus2",
 	}
 	tests := []struct {
@@ -100,7 +100,7 @@ func Test_StepVerifySourceDisk_Run(t *testing.T) {
 			s := StepVerifySourceDisk{
 				SourceDiskResourceID: tt.fields.SourceDiskResourceID,
 				Location:             tt.fields.Location,
-				get: func(ctx context.Context, azcli client.AzureClientSet, id hashiDisksSDK.DiskId) (*hashiDisksSDK.Disk, error) {
+				get: func(ctx context.Context, azcli client.AzureClientSet, id disks.DiskId) (*disks.Disk, error) {
 					if tt.fields.GetDiskError == nil && tt.fields.GetDiskResponse == nil {
 						t.Fatalf("expected getDisk to not be called but it was")
 					}

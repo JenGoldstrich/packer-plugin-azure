@@ -18,8 +18,8 @@ import (
 	"runtime"
 	"strings"
 
-	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
-	hashiVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
 	"github.com/hashicorp/hcl/v2/hcldec"
 	azcommon "github.com/hashicorp/packer-plugin-azure/builder/azure/common"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
@@ -262,23 +262,23 @@ func (b *Builder) Prepare(raws ...interface{}) ([]string, []string, error) {
 	}
 
 	if b.config.OSDiskStorageAccountType == "" {
-		b.config.OSDiskStorageAccountType = string(hashiVMSDK.StorageAccountTypesPremiumLRS)
+		b.config.OSDiskStorageAccountType = string(virtualmachines.StorageAccountTypesPremiumLRS)
 	}
 
 	if b.config.OSDiskCacheType == "" {
-		b.config.OSDiskCacheType = string(hashiVMSDK.CachingTypesReadOnly)
+		b.config.OSDiskCacheType = string(virtualmachines.CachingTypesReadOnly)
 	}
 
 	if b.config.DataDiskStorageAccountType == "" {
-		b.config.DataDiskStorageAccountType = string(hashiVMSDK.StorageAccountTypesPremiumLRS)
+		b.config.DataDiskStorageAccountType = string(virtualmachines.StorageAccountTypesPremiumLRS)
 	}
 
 	if b.config.DataDiskCacheType == "" {
-		b.config.DataDiskCacheType = string(hashiVMSDK.CachingTypesReadOnly)
+		b.config.DataDiskCacheType = string(virtualmachines.CachingTypesReadOnly)
 	}
 
 	if b.config.ImageHyperVGeneration == "" {
-		b.config.ImageHyperVGeneration = string(hashiVMSDK.HyperVGenerationTypeVOne)
+		b.config.ImageHyperVGeneration = string(virtualmachines.HyperVGenerationTypeVOne)
 	}
 
 	// checks, accumulate any errors or warnings
@@ -371,33 +371,33 @@ func (b *Builder) Prepare(raws ...interface{}) ([]string, []string, error) {
 }
 
 func checkDiskCacheType(s string) interface{} {
-	for _, v := range hashiVMSDK.PossibleValuesForCachingTypes() {
-		if string(hashiVMSDK.CachingTypes(s)) == v {
+	for _, v := range virtualmachines.PossibleValuesForCachingTypes() {
+		if string(virtualmachines.CachingTypes(s)) == v {
 			return nil
 		}
 	}
 	return fmt.Errorf("%q is not a valid value %v",
-		s, hashiVMSDK.PossibleValuesForCachingTypes())
+		s, virtualmachines.PossibleValuesForCachingTypes())
 }
 
 func checkStorageAccountType(s string) interface{} {
-	for _, v := range hashiVMSDK.PossibleValuesForStorageAccountTypes() {
-		if string(hashiVMSDK.StorageAccountTypes(s)) == v {
+	for _, v := range virtualmachines.PossibleValuesForStorageAccountTypes() {
+		if string(virtualmachines.StorageAccountTypes(s)) == v {
 			return nil
 		}
 	}
 	return fmt.Errorf("%q is not a valid value %v",
-		s, hashiVMSDK.PossibleValuesForStorageAccountTypes())
+		s, virtualmachines.PossibleValuesForStorageAccountTypes())
 }
 
 func checkHyperVGeneration(s string) interface{} {
-	for _, v := range hashiVMSDK.PossibleValuesForHyperVGenerationType() {
-		if string(hashiVMSDK.HyperVGenerationType(s)) == v {
+	for _, v := range virtualmachines.PossibleValuesForHyperVGenerationType() {
+		if string(virtualmachines.HyperVGenerationType(s)) == v {
 			return nil
 		}
 	}
 	return fmt.Errorf("%q is not a valid value %v",
-		s, hashiVMSDK.PossibleValuesForHyperVGenerationType())
+		s, virtualmachines.PossibleValuesForHyperVGenerationType())
 }
 
 func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook) (packersdk.Artifact, error) {
@@ -635,7 +635,7 @@ func buildsteps(
 			captureSteps,
 			NewStepCreateImage(&StepCreateImage{
 				ImageResourceID:          config.ImageResourceID,
-				ImageOSState:             string(hashiImagesSDK.OperatingSystemStateTypesGeneralized),
+				ImageOSState:             string(images.OperatingSystemStateTypesGeneralized),
 				OSDiskCacheType:          config.OSDiskCacheType,
 				OSDiskStorageAccountType: config.OSDiskStorageAccountType,
 				Location:                 info.Location,

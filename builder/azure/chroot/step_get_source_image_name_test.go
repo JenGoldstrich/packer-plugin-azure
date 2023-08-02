@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"testing"
 
-	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
@@ -87,8 +87,8 @@ func TestChrootStepGetSourceImageName_SharedImage(t *testing.T) {
 		name                  string
 		step                  *StepGetSourceImageName
 		expected              string
-		mockedGalleryReturn   *hashiGalleryImageVersionsSDK.GalleryImageVersion
-		expectedImageId       hashiGalleryImageVersionsSDK.ImageVersionId
+		mockedGalleryReturn   *galleryimageversions.GalleryImageVersion
+		expectedImageId       galleryimageversions.ImageVersionId
 		SourceImageResourceID string
 		GeneratedData         packerbuilderdata.GeneratedData
 	}{
@@ -96,16 +96,16 @@ func TestChrootStepGetSourceImageName_SharedImage(t *testing.T) {
 			name:                  "SharedImageWithMangedImageSource",
 			SourceImageResourceID: "/subscriptions/1234/resourceGroups/bar/providers/Microsoft.Compute/galleries/test/images/foo/versions/1.0.6",
 			GeneratedData:         genData,
-			mockedGalleryReturn: &hashiGalleryImageVersionsSDK.GalleryImageVersion{
-				Properties: &hashiGalleryImageVersionsSDK.GalleryImageVersionProperties{
-					StorageProfile: hashiGalleryImageVersionsSDK.GalleryImageVersionStorageProfile{
-						Source: &hashiGalleryImageVersionsSDK.GalleryArtifactVersionFullSource{
+			mockedGalleryReturn: &galleryimageversions.GalleryImageVersion{
+				Properties: &galleryimageversions.GalleryImageVersionProperties{
+					StorageProfile: galleryimageversions.GalleryImageVersionStorageProfile{
+						Source: &galleryimageversions.GalleryArtifactVersionFullSource{
 							Id: common.StringPtr("/subscription/resource/managed/image/name/as/source"),
 						},
 					},
 				},
 			},
-			expectedImageId: hashiGalleryImageVersionsSDK.ImageVersionId{
+			expectedImageId: galleryimageversions.ImageVersionId{
 				SubscriptionId:    "1234",
 				ResourceGroupName: "bar",
 				GalleryName:       "test",
@@ -125,11 +125,11 @@ func TestChrootStepGetSourceImageName_SharedImage(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 
-			var actualID hashiGalleryImageVersionsSDK.ImageVersionId
+			var actualID galleryimageversions.ImageVersionId
 			step := StepGetSourceImageName{
 				SourceImageResourceID: tt.SourceImageResourceID,
 				GeneratedData:         &tt.GeneratedData,
-				get: func(ctx context.Context, azcli client.AzureClientSet, id hashiGalleryImageVersionsSDK.ImageVersionId) (*hashiGalleryImageVersionsSDK.GalleryImageVersion, error) {
+				get: func(ctx context.Context, azcli client.AzureClientSet, id galleryimageversions.ImageVersionId) (*galleryimageversions.GalleryImageVersion, error) {
 					actualID = id
 					if tt.mockedGalleryReturn == nil {
 						return nil, fmt.Errorf("Generic error")

@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	hashiSnapshotsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/snapshots"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/snapshots"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
@@ -29,7 +29,7 @@ func TestStepCreateSnapshot_Run(t *testing.T) {
 		diskset           Diskset
 		want              multistep.StepAction
 		wantSnapshotset   Diskset
-		expectedSnapshots []hashiSnapshotsSDK.Snapshot
+		expectedSnapshots []snapshots.Snapshot
 	}{
 		{
 			name: "happy path",
@@ -38,11 +38,11 @@ func TestStepCreateSnapshot_Run(t *testing.T) {
 				Location:         "region1",
 			},
 			diskset: diskset("/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/disks/disk1"),
-			expectedSnapshots: []hashiSnapshotsSDK.Snapshot{
+			expectedSnapshots: []snapshots.Snapshot{
 				{
 					Location: "region1",
-					Properties: &hashiSnapshotsSDK.SnapshotProperties{
-						CreationData: hashiSnapshotsSDK.CreationData{
+					Properties: &snapshots.SnapshotProperties{
+						CreationData: snapshots.CreationData{
 							SourceResourceId: common.StringPtr("/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/disks/disk1"),
 							CreateOption:     "Copy",
 						},
@@ -70,11 +70,11 @@ func TestStepCreateSnapshot_Run(t *testing.T) {
 				"/subscriptions/1234/resourceGroups/rg/providers/Microsoft.Compute/snapshots/datadisk-snap1",
 				"/subscriptions/1234/resourceGroups/rg/providers/Microsoft.Compute/snapshots/datadisk-snap2",
 			),
-			expectedSnapshots: []hashiSnapshotsSDK.Snapshot{
+			expectedSnapshots: []snapshots.Snapshot{
 				{
 					Location: "region1",
-					Properties: &hashiSnapshotsSDK.SnapshotProperties{
-						CreationData: hashiSnapshotsSDK.CreationData{
+					Properties: &snapshots.SnapshotProperties{
+						CreationData: snapshots.CreationData{
 							SourceResourceId: common.StringPtr("/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/disks/osdisk"),
 							CreateOption:     "Copy",
 						},
@@ -83,8 +83,8 @@ func TestStepCreateSnapshot_Run(t *testing.T) {
 				},
 				{
 					Location: "region1",
-					Properties: &hashiSnapshotsSDK.SnapshotProperties{
-						CreationData: hashiSnapshotsSDK.CreationData{
+					Properties: &snapshots.SnapshotProperties{
+						CreationData: snapshots.CreationData{
 							SourceResourceId: common.StringPtr("/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/disks/datadisk1"),
 							CreateOption:     "Copy",
 						},
@@ -93,8 +93,8 @@ func TestStepCreateSnapshot_Run(t *testing.T) {
 				},
 				{
 					Location: "region1",
-					Properties: &hashiSnapshotsSDK.SnapshotProperties{
-						CreationData: hashiSnapshotsSDK.CreationData{
+					Properties: &snapshots.SnapshotProperties{
+						CreationData: snapshots.CreationData{
 							SourceResourceId: common.StringPtr("/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/disks/datadisk2"),
 							CreateOption:     "Copy",
 						},
@@ -103,8 +103,8 @@ func TestStepCreateSnapshot_Run(t *testing.T) {
 				},
 				{
 					Location: "region1",
-					Properties: &hashiSnapshotsSDK.SnapshotProperties{
-						CreationData: hashiSnapshotsSDK.CreationData{
+					Properties: &snapshots.SnapshotProperties{
+						CreationData: snapshots.CreationData{
 							SourceResourceId: common.StringPtr("/subscriptions/12345/resourceGroups/group1/providers/Microsoft.Compute/disks/datadisk3"),
 							CreateOption:     "Copy",
 						},
@@ -130,12 +130,12 @@ func TestStepCreateSnapshot_Run(t *testing.T) {
 		state.Put(stateBagKey_Diskset, tt.diskset)
 
 		t.Run(tt.name, func(t *testing.T) {
-			actualSnapshots := []hashiSnapshotsSDK.Snapshot{}
+			actualSnapshots := []snapshots.Snapshot{}
 			s := &StepCreateSnapshotset{
 				OSDiskSnapshotID:         tt.fields.OSDiskSnapshotID,
 				DataDiskSnapshotIDPrefix: tt.fields.DataDiskSnapshotIDPrefix,
 				Location:                 tt.fields.Location,
-				create: func(ctx context.Context, azcli client.AzureClientSet, id hashiSnapshotsSDK.SnapshotId, snapshot hashiSnapshotsSDK.Snapshot) error {
+				create: func(ctx context.Context, azcli client.AzureClientSet, id snapshots.SnapshotId, snapshot snapshots.Snapshot) error {
 					actualSnapshots = append(actualSnapshots, snapshot)
 					return nil
 				},

@@ -13,12 +13,12 @@ import (
 	"time"
 
 	"github.com/Azure/go-autorest/autorest"
-	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
-	hashiGalleryImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
-	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
-	hashiDTLSDK "github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15"
-	hashiVaultsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/keyvault/2023-02-01/vaults"
-	hashiNetworkSDK "github.com/hashicorp/go-azure-sdk/resource-manager/network/2022-09-01"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
+	dtl "github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/keyvault/2023-02-01/vaults"
+	networks "github.com/hashicorp/go-azure-sdk/resource-manager/network/2022-09-01"
 	authWrapper "github.com/hashicorp/go-azure-sdk/sdk/auth/autorest"
 	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
 	"github.com/hashicorp/go-azure-sdk/sdk/environments"
@@ -35,12 +35,12 @@ type AzureClient struct {
 	InspectorMaxLength int
 	LastError          azureErrorResponse
 
-	hashiImagesSDK.ImagesClient
-	hashiVaultsSDK.VaultsClient
-	NetworkMetaClient hashiNetworkSDK.Client
-	hashiGalleryImageVersionsSDK.GalleryImageVersionsClient
-	hashiGalleryImagesSDK.GalleryImagesClient
-	DtlMetaClient hashiDTLSDK.Client
+	images.ImagesClient
+	vaults.VaultsClient
+	NetworkMetaClient networks.Client
+	galleryimageversions.GalleryImageVersionsClient
+	galleryimages.GalleryImagesClient
+	DtlMetaClient dtl.Client
 }
 
 func errorCapture(client *AzureClient) autorest.RespondDecorator {
@@ -84,7 +84,7 @@ func NewAzureClient(ctx context.Context, subscriptionID string,
 	if err != nil {
 		return nil, nil, err
 	}
-	dtlMetaClient := hashiDTLSDK.NewClientWithBaseURI(*resourceManagerEndpoint, func(c *autorest.Client) {
+	dtlMetaClient := dtl.NewClientWithBaseURI(*resourceManagerEndpoint, func(c *autorest.Client) {
 		c.Authorizer = authWrapper.AutorestAuthorizer(resourceManagerAuthorizer)
 		c.UserAgent = fmt.Sprintf("%s %s", useragent.String(version.AzurePluginVersion.FormattedVersion()), "go-azure-sdk Meta Client")
 		c.RequestInspector = withInspection(maxlen)
@@ -92,21 +92,21 @@ func NewAzureClient(ctx context.Context, subscriptionID string,
 	})
 	azureClient.DtlMetaClient = dtlMetaClient
 
-	azureClient.GalleryImageVersionsClient = hashiGalleryImageVersionsSDK.NewGalleryImageVersionsClientWithBaseURI(*resourceManagerEndpoint)
+	azureClient.GalleryImageVersionsClient = galleryimageversions.NewGalleryImageVersionsClientWithBaseURI(*resourceManagerEndpoint)
 	azureClient.GalleryImageVersionsClient.Client.Authorizer = authWrapper.AutorestAuthorizer(resourceManagerAuthorizer)
 	azureClient.GalleryImageVersionsClient.Client.RequestInspector = withInspection(maxlen)
 	azureClient.GalleryImageVersionsClient.Client.ResponseInspector = byConcatDecorators(byInspecting(maxlen), errorCapture(azureClient))
 	azureClient.GalleryImageVersionsClient.Client.UserAgent = fmt.Sprintf("%s %s", useragent.String(version.AzurePluginVersion.FormattedVersion()), azureClient.GalleryImageVersionsClient.Client.UserAgent)
 	azureClient.GalleryImageVersionsClient.Client.PollingDuration = PollingDuration
 
-	azureClient.GalleryImagesClient = hashiGalleryImagesSDK.NewGalleryImagesClientWithBaseURI(*resourceManagerEndpoint)
+	azureClient.GalleryImagesClient = galleryimages.NewGalleryImagesClientWithBaseURI(*resourceManagerEndpoint)
 	azureClient.GalleryImagesClient.Client.Authorizer = authWrapper.AutorestAuthorizer(resourceManagerAuthorizer)
 	azureClient.GalleryImagesClient.Client.RequestInspector = withInspection(maxlen)
 	azureClient.GalleryImagesClient.Client.ResponseInspector = byConcatDecorators(byInspecting(maxlen), errorCapture(azureClient))
 	azureClient.GalleryImagesClient.Client.UserAgent = fmt.Sprintf("%s %s", useragent.String(version.AzurePluginVersion.FormattedVersion()), azureClient.GalleryImagesClient.Client.UserAgent)
 	azureClient.GalleryImagesClient.Client.PollingDuration = PollingDuration
 
-	azureClient.ImagesClient = hashiImagesSDK.NewImagesClientWithBaseURI(*resourceManagerEndpoint)
+	azureClient.ImagesClient = images.NewImagesClientWithBaseURI(*resourceManagerEndpoint)
 	azureClient.ImagesClient.Client.Authorizer = authWrapper.AutorestAuthorizer(resourceManagerAuthorizer)
 	azureClient.ImagesClient.Client.RequestInspector = withInspection(maxlen)
 	azureClient.ImagesClient.Client.ResponseInspector = byConcatDecorators(byInspecting(maxlen), errorCapture(azureClient))
@@ -114,7 +114,7 @@ func NewAzureClient(ctx context.Context, subscriptionID string,
 	azureClient.ImagesClient.Client.PollingDuration = PollingDuration
 
 	// TODO Request/Response inpectors for Track 2
-	networkMetaClient, err := hashiNetworkSDK.NewClientWithBaseURI(cloud.ResourceManager, func(c *resourcemanager.Client) {
+	networkMetaClient, err := networks.NewClientWithBaseURI(cloud.ResourceManager, func(c *resourcemanager.Client) {
 		c.Client.Authorizer = resourceManagerAuthorizer
 		c.Client.UserAgent = "some-user-agent"
 	})

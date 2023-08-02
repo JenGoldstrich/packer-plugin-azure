@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	hashiSecretsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/keyvault/2023-02-01/secrets"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/keyvault/2023-02-01/secrets"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/constants"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 )
@@ -27,7 +27,7 @@ func TestNewStepCertificateInKeyVault(t *testing.T) {
 	certKVStep := &StepCertificateInKeyVault{
 		say:         func(message string) {},
 		error:       func(e error) {},
-		set:         func(ctx context.Context, id hashiSecretsSDK.SecretId) error { return nil },
+		set:         func(ctx context.Context, id secrets.SecretId) error { return nil },
 		config:      config,
 		certificate: config.winrmCertificate}
 
@@ -52,7 +52,7 @@ func TestNewStepCertificateInKeyVault_error(t *testing.T) {
 	certKVStep := &StepCertificateInKeyVault{
 		say:         func(message string) {},
 		error:       func(e error) {},
-		set:         func(ctx context.Context, id hashiSecretsSDK.SecretId) error { return fmt.Errorf("Unit test fail") },
+		set:         func(ctx context.Context, id secrets.SecretId) error { return fmt.Errorf("Unit test fail") },
 		config:      config,
 		certificate: config.winrmCertificate}
 

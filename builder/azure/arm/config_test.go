@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	hashiVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/constants"
 	sdkconfig "github.com/hashicorp/packer-plugin-sdk/template/config"
 )
@@ -128,11 +128,11 @@ func TestConfigShouldBeAbleToOverrideDefaultedValues(t *testing.T) {
 		t.Errorf("Expected 'vm_size' to be set to 'override_vm_size', but found %q!", c.VMSize)
 	}
 
-	if c.managedImageStorageAccountType != hashiVMSDK.StorageAccountTypesPremiumLRS {
+	if c.managedImageStorageAccountType != virtualmachines.StorageAccountTypesPremiumLRS {
 		t.Errorf("Expected 'managed_image_storage_account_type' to be set to 'Premium_LRS', but found %q!", c.managedImageStorageAccountType)
 	}
 
-	if c.diskCachingType != hashiVMSDK.CachingTypesNone {
+	if c.diskCachingType != virtualmachines.CachingTypesNone {
 		t.Errorf("Expected 'disk_caching_type' to be set to 'None', but found %q!", c.diskCachingType)
 	}
 

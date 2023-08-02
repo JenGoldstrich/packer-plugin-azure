@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 	registryimage "github.com/hashicorp/packer-plugin-sdk/packer/registry/image"
@@ -84,7 +84,7 @@ func (a *Artifact) Destroy() error {
 
 		switch restype {
 		case "microsoft.compute/images":
-			imageID := hashiImagesSDK.NewImageID(a.AzureClientSet.SubscriptionID(), id.ResourceGroup, id.ResourceName.String())
+			imageID := images.NewImageID(a.AzureClientSet.SubscriptionID(), id.ResourceGroup, id.ResourceName.String())
 			err := a.AzureClientSet.ImagesClient().DeleteThenPoll(ctx, imageID)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("Unable to initiate deletion of resource (%s): %v", resource, err))

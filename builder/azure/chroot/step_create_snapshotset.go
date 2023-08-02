@@ -9,7 +9,7 @@ import (
 	"log"
 	"strings"
 
-	hashiSnapshotsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/snapshots"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/snapshots"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
@@ -27,7 +27,7 @@ type StepCreateSnapshotset struct {
 
 	snapshots Diskset
 
-	create func(context.Context, client.AzureClientSet, hashiSnapshotsSDK.SnapshotId, hashiSnapshotsSDK.Snapshot) error
+	create func(context.Context, client.AzureClientSet, snapshots.SnapshotId, snapshots.Snapshot) error
 }
 
 func NewStepCreateSnapshotset(step *StepCreateSnapshotset) *StepCreateSnapshotset {
@@ -68,17 +68,17 @@ func (s *StepCreateSnapshotset) Run(ctx context.Context, state multistep.StateBa
 		ui.Say(fmt.Sprintf("Creating snapshot %q", ssr))
 
 		resourceID := resource.String()
-		snapshot := hashiSnapshotsSDK.Snapshot{
+		snapshot := snapshots.Snapshot{
 			Location: s.Location,
-			Properties: &hashiSnapshotsSDK.SnapshotProperties{
-				CreationData: hashiSnapshotsSDK.CreationData{
-					CreateOption:     hashiSnapshotsSDK.DiskCreateOptionCopy,
+			Properties: &snapshots.SnapshotProperties{
+				CreationData: snapshots.CreationData{
+					CreateOption:     snapshots.DiskCreateOptionCopy,
 					SourceResourceId: &resourceID,
 				},
 				Incremental: common.BoolPtr(false),
 			},
 		}
-		snapshotSDKID := hashiSnapshotsSDK.NewSnapshotID(azcli.SubscriptionID(), ssr.ResourceGroup, ssr.ResourceName.String())
+		snapshotSDKID := snapshots.NewSnapshotID(azcli.SubscriptionID(), ssr.ResourceGroup, ssr.ResourceName.String())
 		err = s.create(ctx, azcli, snapshotSDKID, snapshot)
 		if err != nil {
 			return errorMessage("error initiating snapshot %q: %v", ssr, err)
@@ -89,7 +89,7 @@ func (s *StepCreateSnapshotset) Run(ctx context.Context, state multistep.StateBa
 	return multistep.ActionContinue
 }
 
-func (s *StepCreateSnapshotset) createSnapshot(ctx context.Context, azcli client.AzureClientSet, id hashiSnapshotsSDK.SnapshotId, snapshot hashiSnapshotsSDK.Snapshot) error {
+func (s *StepCreateSnapshotset) createSnapshot(ctx context.Context, azcli client.AzureClientSet, id snapshots.SnapshotId, snapshot snapshots.Snapshot) error {
 	return azcli.SnapshotsClient().CreateOrUpdateThenPoll(ctx, id, snapshot)
 }
 
@@ -100,7 +100,7 @@ func (s *StepCreateSnapshotset) Cleanup(state multistep.StateBag) {
 
 		for _, resource := range s.snapshots {
 
-			snapshotID := hashiSnapshotsSDK.NewSnapshotID(azcli.SubscriptionID(), resource.ResourceGroup, resource.ResourceName.String())
+			snapshotID := snapshots.NewSnapshotID(azcli.SubscriptionID(), resource.ResourceGroup, resource.ResourceName.String())
 			ui.Say(fmt.Sprintf("Removing any active SAS for snapshot %q", resource))
 			{
 				err := azcli.SnapshotsClient().RevokeAccessThenPoll(context.TODO(), snapshotID)

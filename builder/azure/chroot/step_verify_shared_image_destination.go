@@ -9,8 +9,8 @@ import (
 	"log"
 	"strings"
 
-	hashiGalleryImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
-	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -23,8 +23,8 @@ var _ multistep.Step = &StepVerifySharedImageDestination{}
 type StepVerifySharedImageDestination struct {
 	Image        SharedImageGalleryDestination
 	Location     string
-	listVersions func(context.Context, client.AzureClientSet, hashiGalleryImageVersionsSDK.GalleryImageId) ([]hashiGalleryImageVersionsSDK.GalleryImageVersion, error)
-	getImage     func(context.Context, client.AzureClientSet, hashiGalleryImagesSDK.GalleryImageId) (*hashiGalleryImagesSDK.GalleryImage, error)
+	listVersions func(context.Context, client.AzureClientSet, galleryimageversions.GalleryImageId) ([]galleryimageversions.GalleryImageVersion, error)
+	getImage     func(context.Context, client.AzureClientSet, galleryimages.GalleryImageId) (*galleryimages.GalleryImage, error)
 }
 
 func NewStepVerifySharedImageDestination(step *StepVerifySharedImageDestination) *StepVerifySharedImageDestination {
@@ -54,7 +54,7 @@ func (s *StepVerifySharedImageDestination) Run(ctx context.Context, state multis
 	)
 
 	ui.Say(fmt.Sprintf("Validating that shared image %s exists", imageURI))
-	galleryImageID := hashiGalleryImagesSDK.NewGalleryImageID(
+	galleryImageID := galleryimages.NewGalleryImageID(
 		azcli.SubscriptionID(),
 		s.Image.ResourceGroup,
 		s.Image.GalleryName,
@@ -88,7 +88,7 @@ func (s *StepVerifySharedImageDestination) Run(ctx context.Context, state multis
 			s.Location)
 	}
 
-	if image.Properties.OsType != hashiGalleryImagesSDK.OperatingSystemTypesLinux {
+	if image.Properties.OsType != galleryimages.OperatingSystemTypesLinux {
 		return errorMessage("The shared image (%q) is not a Linux image (found %q). Currently only Linux images are supported.",
 			*(image.Id),
 			image.Properties.OsType)
@@ -101,7 +101,7 @@ func (s *StepVerifySharedImageDestination) Run(ctx context.Context, state multis
 
 	// TODO Suggest moving gallery image ID to common IDs library
 	// so we don't have to define two different versions of the same resource ID
-	galleryImageIDForList := hashiGalleryImageVersionsSDK.NewGalleryImageID(
+	galleryImageIDForList := galleryimageversions.NewGalleryImageID(
 		azcli.SubscriptionID(),
 		s.Image.ResourceGroup,
 		s.Image.GalleryName,
@@ -127,7 +127,7 @@ func (s *StepVerifySharedImageDestination) Run(ctx context.Context, state multis
 	return multistep.ActionContinue
 }
 
-func (s *StepVerifySharedImageDestination) getGalleryImage(ctx context.Context, azcli client.AzureClientSet, id hashiGalleryImagesSDK.GalleryImageId) (*hashiGalleryImagesSDK.GalleryImage, error) {
+func (s *StepVerifySharedImageDestination) getGalleryImage(ctx context.Context, azcli client.AzureClientSet, id galleryimages.GalleryImageId) (*galleryimages.GalleryImage, error) {
 	res, err := azcli.GalleryImagesClient().Get(ctx, id)
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func (s *StepVerifySharedImageDestination) getGalleryImage(ctx context.Context, 
 	return res.Model, nil
 }
 
-func (s *StepVerifySharedImageDestination) listGalleryVersions(ctx context.Context, azcli client.AzureClientSet, id hashiGalleryImageVersionsSDK.GalleryImageId) ([]hashiGalleryImageVersionsSDK.GalleryImageVersion, error) {
+func (s *StepVerifySharedImageDestination) listGalleryVersions(ctx context.Context, azcli client.AzureClientSet, id galleryimageversions.GalleryImageId) ([]galleryimageversions.GalleryImageVersion, error) {
 	res, err := azcli.GalleryImageVersionsClient().ListByGalleryImageComplete(ctx, id)
 	if err != nil {
 		return nil, err

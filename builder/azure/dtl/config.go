@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2021-07-01/compute"
-	hashiVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
 
 	"github.com/masterzen/winrm"
 
@@ -213,7 +213,7 @@ type Config struct {
 	// type for a managed image. Valid values are Standard_LRS and Premium_LRS.
 	// The default is Standard_LRS.
 	ManagedImageStorageAccountType string `mapstructure:"managed_image_storage_account_type" required:"false"`
-	managedImageStorageAccountType hashiVMSDK.StorageAccountTypes
+	managedImageStorageAccountType virtualmachines.StorageAccountTypes
 
 	// the user can define up to 15
 	// tags. Tag names cannot exceed 512 characters, and tag values cannot exceed
@@ -265,7 +265,7 @@ type Config struct {
 	// Specify the disk caching type. Valid values
 	// are None, ReadOnly, and ReadWrite. The default value is ReadWrite.
 	DiskCachingType string `mapstructure:"disk_caching_type" required:"false"`
-	diskCachingType hashiVMSDK.CachingTypes
+	diskCachingType virtualmachines.CachingTypes
 
 	// DTL values
 	StorageType string `mapstructure:"storage_type"`
@@ -330,8 +330,8 @@ func (c *Config) isPublishToSIG() bool {
 	return c.SharedGalleryDestination.SigDestinationGalleryName != ""
 }
 
-func (c *Config) toVirtualMachineCaptureParameters() *hashiVMSDK.VirtualMachineCaptureParameters {
-	return &hashiVMSDK.VirtualMachineCaptureParameters{
+func (c *Config) toVirtualMachineCaptureParameters() *virtualmachines.VirtualMachineCaptureParameters {
+	return &virtualmachines.VirtualMachineCaptureParameters{
 		DestinationContainerName: c.CaptureContainerName,
 		VhdPrefix:                c.CaptureNamePrefix,
 		OverwriteVhds:            false,
@@ -544,11 +544,11 @@ func provideDefaultValues(c *Config) error {
 	}
 
 	if c.ManagedImageStorageAccountType == "" {
-		c.managedImageStorageAccountType = hashiVMSDK.StorageAccountTypesStandardLRS
+		c.managedImageStorageAccountType = virtualmachines.StorageAccountTypesStandardLRS
 	}
 
 	if c.DiskCachingType == "" {
-		c.diskCachingType = hashiVMSDK.CachingTypesReadWrite
+		c.diskCachingType = virtualmachines.CachingTypesReadWrite
 	}
 
 	if c.ImagePublisher != "" && c.ImageVersion == "" {
@@ -743,9 +743,9 @@ func assertRequiredParametersSet(c *Config, errs *packersdk.MultiError) {
 
 	switch c.ManagedImageStorageAccountType {
 	case "", string(compute.StorageAccountTypesStandardLRS):
-		c.managedImageStorageAccountType = hashiVMSDK.StorageAccountTypesStandardLRS
+		c.managedImageStorageAccountType = virtualmachines.StorageAccountTypesStandardLRS
 	case string(compute.StorageAccountTypesPremiumLRS):
-		c.managedImageStorageAccountType = hashiVMSDK.StorageAccountTypesPremiumLRS
+		c.managedImageStorageAccountType = virtualmachines.StorageAccountTypesPremiumLRS
 	default:
 		errs = packersdk.MultiErrorAppend(errs, fmt.Errorf("The managed_image_storage_account_type %q is invalid", c.ManagedImageStorageAccountType))
 	}

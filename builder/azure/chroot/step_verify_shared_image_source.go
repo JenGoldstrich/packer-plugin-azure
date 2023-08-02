@@ -9,8 +9,8 @@ import (
 	"log"
 	"strings"
 
-	hashiGalleryImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
-	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -25,8 +25,8 @@ type StepVerifySharedImageSource struct {
 	SubscriptionID string
 	Location       string
 
-	getVersion func(context.Context, client.AzureClientSet, hashiGalleryImageVersionsSDK.ImageVersionId) (*hashiGalleryImageVersionsSDK.GalleryImageVersion, error)
-	getImage   func(context.Context, client.AzureClientSet, hashiGalleryImagesSDK.GalleryImageId) (*hashiGalleryImagesSDK.GalleryImage, error)
+	getVersion func(context.Context, client.AzureClientSet, galleryimageversions.ImageVersionId) (*galleryimageversions.GalleryImageVersion, error)
+	getImage   func(context.Context, client.AzureClientSet, galleryimages.GalleryImageId) (*galleryimages.GalleryImage, error)
 }
 
 func NewStepVerifySharedImageSource(step *StepVerifySharedImageSource) *StepVerifySharedImageSource {
@@ -61,7 +61,7 @@ func (s *StepVerifySharedImageSource) Run(ctx context.Context, state multistep.S
 	ui.Say(fmt.Sprintf("Validating that shared image version %q exists",
 		s.SharedImageID))
 
-	galleryImageVersionID := hashiGalleryImageVersionsSDK.NewImageVersionID(
+	galleryImageVersionID := galleryimageversions.NewImageVersionID(
 		azcli.SubscriptionID(),
 		resource.ResourceGroup,
 		resource.ResourceName[0],
@@ -101,7 +101,7 @@ func (s *StepVerifySharedImageSource) Run(ctx context.Context, state multistep.S
 	}
 
 	imageResource, _ := resource.Parent()
-	galleryImageID := hashiGalleryImagesSDK.NewGalleryImageID(
+	galleryImageID := galleryimages.NewGalleryImageID(
 		azcli.SubscriptionID(),
 		resource.ResourceGroup,
 		resource.ResourceName[0],
@@ -125,7 +125,7 @@ func (s *StepVerifySharedImageSource) Run(ctx context.Context, state multistep.S
 		image.Properties.HyperVGeneration,
 		image.Properties.OsState)
 
-	if image.Properties.OsType != hashiGalleryImagesSDK.OperatingSystemTypesLinux {
+	if image.Properties.OsType != galleryimages.OperatingSystemTypesLinux {
 		return errorMessage("The shared image (%q) is not a Linux image (found %q). Currently only Linux images are supported.",
 			&image.Id,
 			image.Properties.OsType)
@@ -138,8 +138,8 @@ func (s *StepVerifySharedImageSource) Run(ctx context.Context, state multistep.S
 	return multistep.ActionContinue
 }
 
-func (s *StepVerifySharedImageSource) getGalleryVersion(ctx context.Context, azcli client.AzureClientSet, id hashiGalleryImageVersionsSDK.ImageVersionId) (*hashiGalleryImageVersionsSDK.GalleryImageVersion, error) {
-	res, err := azcli.GalleryImageVersionsClient().Get(ctx, id, hashiGalleryImageVersionsSDK.DefaultGetOperationOptions())
+func (s *StepVerifySharedImageSource) getGalleryVersion(ctx context.Context, azcli client.AzureClientSet, id galleryimageversions.ImageVersionId) (*galleryimageversions.GalleryImageVersion, error) {
+	res, err := azcli.GalleryImageVersionsClient().Get(ctx, id, galleryimageversions.DefaultGetOperationOptions())
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (s *StepVerifySharedImageSource) getGalleryVersion(ctx context.Context, azc
 	return res.Model, nil
 }
 
-func (s *StepVerifySharedImageSource) getGalleryImage(ctx context.Context, azcli client.AzureClientSet, id hashiGalleryImagesSDK.GalleryImageId) (*hashiGalleryImagesSDK.GalleryImage, error) {
+func (s *StepVerifySharedImageSource) getGalleryImage(ctx context.Context, azcli client.AzureClientSet, id galleryimages.GalleryImageId) (*galleryimages.GalleryImage, error) {
 	res, err := azcli.GalleryImagesClient().Get(ctx, id)
 	if err != nil {
 		return nil, err

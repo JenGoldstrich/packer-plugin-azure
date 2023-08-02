@@ -15,13 +15,13 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/useragent"
 
 	"github.com/Azure/go-autorest/autorest"
-	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
-	hashiVMImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachineimages"
-	hashiVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
-	hashiDisksSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
-	hashiSnapshotsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/snapshots"
-	hashiGalleryImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
-	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachineimages"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/snapshots"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 	"github.com/hashicorp/go-azure-sdk/sdk/auth"
 	authWrapper "github.com/hashicorp/go-azure-sdk/sdk/auth/autorest"
 	version "github.com/hashicorp/packer-plugin-azure/version"
@@ -30,15 +30,15 @@ import (
 type AzureClientSet interface {
 	MetadataClient() MetadataClientAPI
 
-	DisksClient() hashiDisksSDK.DisksClient
-	SnapshotsClient() hashiSnapshotsSDK.SnapshotsClient
-	ImagesClient() hashiImagesSDK.ImagesClient
+	DisksClient() disks.DisksClient
+	SnapshotsClient() snapshots.SnapshotsClient
+	ImagesClient() images.ImagesClient
 
-	GalleryImagesClient() hashiGalleryImagesSDK.GalleryImagesClient
-	GalleryImageVersionsClient() hashiGalleryImageVersionsSDK.GalleryImageVersionsClient
+	GalleryImagesClient() galleryimages.GalleryImagesClient
+	GalleryImageVersionsClient() galleryimageversions.GalleryImageVersionsClient
 
-	VirtualMachinesClient() hashiVMSDK.VirtualMachinesClient
-	VirtualMachineImagesClient() hashiVMImagesSDK.VirtualMachineImagesClient
+	VirtualMachinesClient() virtualmachines.VirtualMachinesClient
+	VirtualMachineImagesClient() virtualmachineimages.VirtualMachineImagesClient
 
 	// SubscriptionID returns the subscription ID that this client set was created for
 	SubscriptionID() string
@@ -104,50 +104,50 @@ func (s azureClientSet) MetadataClient() MetadataClientAPI {
 	}
 }
 
-func (s azureClientSet) DisksClient() hashiDisksSDK.DisksClient {
-	c := hashiDisksSDK.NewDisksClientWithBaseURI(s.ResourceManagerEndpoint)
+func (s azureClientSet) DisksClient() disks.DisksClient {
+	c := disks.NewDisksClientWithBaseURI(s.ResourceManagerEndpoint)
 	s.configureTrack1Client(&c.Client)
 	c.Client.PollingDelay = s.PollingDelay
 	return c
 }
 
-func (s azureClientSet) SnapshotsClient() hashiSnapshotsSDK.SnapshotsClient {
-	c := hashiSnapshotsSDK.NewSnapshotsClientWithBaseURI(s.ResourceManagerEndpoint)
+func (s azureClientSet) SnapshotsClient() snapshots.SnapshotsClient {
+	c := snapshots.NewSnapshotsClientWithBaseURI(s.ResourceManagerEndpoint)
 	s.configureTrack1Client(&c.Client)
 	c.Client.PollingDelay = s.PollingDelay
 	return c
 }
 
-func (s azureClientSet) ImagesClient() hashiImagesSDK.ImagesClient {
-	c := hashiImagesSDK.NewImagesClientWithBaseURI(s.ResourceManagerEndpoint)
+func (s azureClientSet) ImagesClient() images.ImagesClient {
+	c := images.NewImagesClientWithBaseURI(s.ResourceManagerEndpoint)
 	s.configureTrack1Client(&c.Client)
 	c.Client.PollingDelay = s.PollingDelay
 	return c
 }
 
-func (s azureClientSet) VirtualMachinesClient() hashiVMSDK.VirtualMachinesClient {
-	c := hashiVMSDK.NewVirtualMachinesClientWithBaseURI(s.ResourceManagerEndpoint)
+func (s azureClientSet) VirtualMachinesClient() virtualmachines.VirtualMachinesClient {
+	c := virtualmachines.NewVirtualMachinesClientWithBaseURI(s.ResourceManagerEndpoint)
 	s.configureTrack1Client(&c.Client)
 	c.Client.PollingDelay = s.PollingDelay
 	return c
 }
 
-func (s azureClientSet) VirtualMachineImagesClient() hashiVMImagesSDK.VirtualMachineImagesClient {
-	c := hashiVMImagesSDK.NewVirtualMachineImagesClientWithBaseURI(s.ResourceManagerEndpoint)
+func (s azureClientSet) VirtualMachineImagesClient() virtualmachineimages.VirtualMachineImagesClient {
+	c := virtualmachineimages.NewVirtualMachineImagesClientWithBaseURI(s.ResourceManagerEndpoint)
 	s.configureTrack1Client(&c.Client)
 	c.Client.PollingDelay = s.PollingDelay
 	return c
 }
 
-func (s azureClientSet) GalleryImagesClient() hashiGalleryImagesSDK.GalleryImagesClient {
-	c := hashiGalleryImagesSDK.NewGalleryImagesClientWithBaseURI(s.ResourceManagerEndpoint)
+func (s azureClientSet) GalleryImagesClient() galleryimages.GalleryImagesClient {
+	c := galleryimages.NewGalleryImagesClientWithBaseURI(s.ResourceManagerEndpoint)
 	s.configureTrack1Client(&c.Client)
 	c.Client.PollingDelay = s.PollingDelay
 	return c
 }
 
-func (s azureClientSet) GalleryImageVersionsClient() hashiGalleryImageVersionsSDK.GalleryImageVersionsClient {
-	c := hashiGalleryImageVersionsSDK.NewGalleryImageVersionsClientWithBaseURI(s.ResourceManagerEndpoint)
+func (s azureClientSet) GalleryImageVersionsClient() galleryimageversions.GalleryImageVersionsClient {
+	c := galleryimageversions.NewGalleryImageVersionsClientWithBaseURI(s.ResourceManagerEndpoint)
 	s.configureTrack1Client(&c.Client)
 	c.Client.PollingDelay = s.PollingDelay
 	return c

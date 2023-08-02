@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 
-	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -27,7 +27,7 @@ type StepGetSourceImageName struct {
 	Location      string
 	GeneratedData *packerbuilderdata.GeneratedData
 
-	get func(context.Context, client.AzureClientSet, hashiGalleryImageVersionsSDK.ImageVersionId) (*hashiGalleryImageVersionsSDK.GalleryImageVersion, error)
+	get func(context.Context, client.AzureClientSet, galleryimageversions.ImageVersionId) (*galleryimageversions.GalleryImageVersion, error)
 }
 
 func NewStepGetSourceImageName(step *StepGetSourceImageName) *StepGetSourceImageName {
@@ -54,7 +54,7 @@ func (s *StepGetSourceImageName) Run(ctx context.Context, state multistep.StateB
 			return multistep.ActionContinue
 		}
 
-		imageVersionID := hashiGalleryImageVersionsSDK.NewImageVersionID(azcli.SubscriptionID(), imageID.ResourceGroup, imageID.ResourceName[0], imageID.ResourceName[1], imageID.ResourceName[2])
+		imageVersionID := galleryimageversions.NewImageVersionID(azcli.SubscriptionID(), imageID.ResourceGroup, imageID.ResourceName[0], imageID.ResourceName[1], imageID.ResourceName[2])
 		image, err := s.get(ctx, azcli, imageVersionID)
 		if err != nil {
 			log.Printf("[TRACE] error retrieving managed image name for shared source image %q: %v", s.SourceImageResourceID, err)
@@ -83,9 +83,9 @@ func (s *StepGetSourceImageName) Run(ctx context.Context, state multistep.StateB
 	return multistep.ActionContinue
 }
 
-func (s *StepGetSourceImageName) getSharedImageGalleryVersion(ctx context.Context, azclient client.AzureClientSet, id hashiGalleryImageVersionsSDK.ImageVersionId) (*hashiGalleryImageVersionsSDK.GalleryImageVersion, error) {
+func (s *StepGetSourceImageName) getSharedImageGalleryVersion(ctx context.Context, azclient client.AzureClientSet, id galleryimageversions.ImageVersionId) (*galleryimageversions.GalleryImageVersion, error) {
 
-	imageVersionResult, err := azclient.GalleryImageVersionsClient().Get(ctx, id, hashiGalleryImageVersionsSDK.DefaultGetOperationOptions())
+	imageVersionResult, err := azclient.GalleryImageVersionsClient().Get(ctx, id, galleryimageversions.DefaultGetOperationOptions())
 	if err != nil {
 		return nil, err
 	}

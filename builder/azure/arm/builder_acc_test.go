@@ -36,8 +36,8 @@ import (
 	"testing"
 	"time"
 
-	hashiGalleryImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
-	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 	commonclient "github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/acctest"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -343,31 +343,31 @@ func createTestAzureClient(t *testing.T) AzureClient {
 
 func createSharedImageGalleryDefinition(t *testing.T, params CreateSharedImageGalleryDefinitionParameters) {
 	azureClient := createTestAzureClient(t)
-	osType := hashiGalleryImagesSDK.OperatingSystemTypesLinux
+	osType := galleryimages.OperatingSystemTypesLinux
 	if params.isWindows {
-		osType = hashiGalleryImagesSDK.OperatingSystemTypesWindows
+		osType = galleryimages.OperatingSystemTypesWindows
 	}
-	osState := hashiGalleryImagesSDK.OperatingSystemStateTypesGeneralized
+	osState := galleryimages.OperatingSystemStateTypesGeneralized
 	if params.specialized {
-		osState = hashiGalleryImagesSDK.OperatingSystemStateTypesSpecialized
+		osState = galleryimages.OperatingSystemStateTypesSpecialized
 	}
-	osArch := hashiGalleryImagesSDK.ArchitectureArmSixFour
+	osArch := galleryimages.ArchitectureArmSixFour
 	if params.isX64 {
-		osArch = hashiGalleryImagesSDK.ArchitectureXSixFour
+		osArch = galleryimages.ArchitectureXSixFour
 	}
-	hyperVGeneration := hashiGalleryImagesSDK.HyperVGenerationVOne
+	hyperVGeneration := galleryimages.HyperVGenerationVOne
 	if params.useGenTwoVM {
-		hyperVGeneration = hashiGalleryImagesSDK.HyperVGenerationVTwo
+		hyperVGeneration = galleryimages.HyperVGenerationVTwo
 	}
 	location := "southcentralus"
-	galleryId := hashiGalleryImagesSDK.NewGalleryImageID(params.subscriptionId, "packer-acceptance-test", "acctestgallery", params.galleryImageName)
-	_, err := azureClient.GalleryImagesClient.CreateOrUpdate(context.TODO(), galleryId, hashiGalleryImagesSDK.GalleryImage{
-		Properties: &hashiGalleryImagesSDK.GalleryImageProperties{
+	galleryId := galleryimages.NewGalleryImageID(params.subscriptionId, "packer-acceptance-test", "acctestgallery", params.galleryImageName)
+	_, err := azureClient.GalleryImagesClient.CreateOrUpdate(context.TODO(), galleryId, galleryimages.GalleryImage{
+		Properties: &galleryimages.GalleryImageProperties{
 			OsType:           osType,
 			OsState:          osState,
 			Architecture:     &osArch,
 			HyperVGeneration: &hyperVGeneration,
-			Identifier: hashiGalleryImagesSDK.GalleryImageIdentifier{
+			Identifier: galleryimages.GalleryImageIdentifier{
 				Publisher: params.imagePublisher,
 				Offer:     params.imageOffer,
 				Sku:       params.imageSku,
@@ -383,7 +383,7 @@ func createSharedImageGalleryDefinition(t *testing.T, params CreateSharedImageGa
 
 func deleteSharedImageGalleryDefinition(t *testing.T, subscriptionId, galleryImageName string) {
 	azureClient := createTestAzureClient(t)
-	galleryVersionId := hashiGalleryImageVersionsSDK.NewImageVersionID(subscriptionId, "packer-acceptance-test", "acctestgallery", galleryImageName, "1.0.0")
+	galleryVersionId := galleryimageversions.NewImageVersionID(subscriptionId, "packer-acceptance-test", "acctestgallery", galleryImageName, "1.0.0")
 	err := azureClient.GalleryImageVersionsClient.DeleteThenPoll(context.TODO(), galleryVersionId)
 	if err != nil {
 		t.Fatalf("failed to delete Gallery %s: %s", galleryImageName, err)
@@ -393,7 +393,7 @@ func deleteSharedImageGalleryDefinition(t *testing.T, subscriptionId, galleryIma
 		RetryDelay: (&retry.Backoff{InitialBackoff: 10 * time.Second, MaxBackoff: 60 * time.Second, Multiplier: 2}).Linear,
 	}
 	err = retryConfig.Run(context.TODO(), func(ctx context.Context) error {
-		galleryId := hashiGalleryImagesSDK.NewGalleryImageID(subscriptionId, "packer-acceptance-test", "acctestgallery", galleryImageName)
+		galleryId := galleryimages.NewGalleryImageID(subscriptionId, "packer-acceptance-test", "acctestgallery", galleryImageName)
 		err := azureClient.GalleryImagesClient.DeleteThenPoll(context.TODO(), galleryId)
 		if err != nil {
 			return err

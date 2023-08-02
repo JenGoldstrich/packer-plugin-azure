@@ -4,62 +4,62 @@
 package client
 
 import (
-	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
-	hashiVMImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachineimages"
-	hashiVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
-	hashiDisksSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
-	hashiSnapshotsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/snapshots"
-	hashiGalleryImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
-	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachineimages"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/snapshots"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimages"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 )
 
 var _ AzureClientSet = &AzureClientSetMock{}
 
 // AzureClientSetMock provides a generic mock for AzureClientSet
 type AzureClientSetMock struct {
-	DisksClientMock                hashiDisksSDK.DisksClient
-	SnapshotsClientMock            hashiSnapshotsSDK.SnapshotsClient
-	ImagesClientMock               hashiImagesSDK.ImagesClient
-	VirtualMachinesClientMock      hashiVMSDK.VirtualMachinesClient
-	VirtualMachineImagesClientMock hashiVMImagesSDK.VirtualMachineImagesClient
-	GalleryImagesClientMock        hashiGalleryImagesSDK.GalleryImagesClient
-	GalleryImageVersionsClientMock hashiGalleryImageVersionsSDK.GalleryImageVersionsClient
+	DisksClientMock                disks.DisksClient
+	SnapshotsClientMock            snapshots.SnapshotsClient
+	ImagesClientMock               images.ImagesClient
+	VirtualMachinesClientMock      virtualmachines.VirtualMachinesClient
+	VirtualMachineImagesClientMock virtualmachineimages.VirtualMachineImagesClient
+	GalleryImagesClientMock        galleryimages.GalleryImagesClient
+	GalleryImageVersionsClientMock galleryimageversions.GalleryImageVersionsClient
 	MetadataClientMock             MetadataClientAPI
 	SubscriptionIDMock             string
 }
 
 // DisksClient returns a DisksClient
-func (m *AzureClientSetMock) DisksClient() hashiDisksSDK.DisksClient {
+func (m *AzureClientSetMock) DisksClient() disks.DisksClient {
 	return m.DisksClientMock
 }
 
 // SnapshotsClient returns a SnapshotsClient
-func (m *AzureClientSetMock) SnapshotsClient() hashiSnapshotsSDK.SnapshotsClient {
+func (m *AzureClientSetMock) SnapshotsClient() snapshots.SnapshotsClient {
 	return m.SnapshotsClientMock
 }
 
 // ImagesClient returns a ImagesClient
-func (m *AzureClientSetMock) ImagesClient() hashiImagesSDK.ImagesClient {
+func (m *AzureClientSetMock) ImagesClient() images.ImagesClient {
 	return m.ImagesClientMock
 }
 
 // VirtualMachineImagesClient returns a VirtualMachineImagesClient
-func (m *AzureClientSetMock) VirtualMachineImagesClient() hashiVMImagesSDK.VirtualMachineImagesClient {
+func (m *AzureClientSetMock) VirtualMachineImagesClient() virtualmachineimages.VirtualMachineImagesClient {
 	return m.VirtualMachineImagesClientMock
 }
 
 // VirtualMachinesClient returns a VirtualMachinesClient
-func (m *AzureClientSetMock) VirtualMachinesClient() hashiVMSDK.VirtualMachinesClient {
+func (m *AzureClientSetMock) VirtualMachinesClient() virtualmachines.VirtualMachinesClient {
 	return m.VirtualMachinesClientMock
 }
 
 // GalleryImagesClient returns a GalleryImagesClient
-func (m *AzureClientSetMock) GalleryImagesClient() hashiGalleryImagesSDK.GalleryImagesClient {
+func (m *AzureClientSetMock) GalleryImagesClient() galleryimages.GalleryImagesClient {
 	return m.GalleryImagesClientMock
 }
 
 // GalleryImageVersionsClient returns a GalleryImageVersionsClient
-func (m *AzureClientSetMock) GalleryImageVersionsClient() hashiGalleryImageVersionsSDK.GalleryImageVersionsClient {
+func (m *AzureClientSetMock) GalleryImageVersionsClient() galleryimageversions.GalleryImageVersionsClient {
 	return m.GalleryImageVersionsClientMock
 }
 

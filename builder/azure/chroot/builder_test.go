@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	hashiVMSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachines"
 
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
@@ -45,14 +45,14 @@ func TestBuilder_Prepare(t *testing.T) {
 				if c.MountPartition != "1" {
 					t.Errorf("Expected MountPartition to be %s, but found %s", "1", c.MountPartition)
 				}
-				if c.OSDiskStorageAccountType != string(hashiVMSDK.StorageAccountTypesPremiumLRS) {
-					t.Errorf("Expected OSDiskStorageAccountType to be %s, but found %s", string(hashiVMSDK.StorageAccountTypesPremiumLRS), c.OSDiskStorageAccountType)
+				if c.OSDiskStorageAccountType != string(virtualmachines.StorageAccountTypesPremiumLRS) {
+					t.Errorf("Expected OSDiskStorageAccountType to be %s, but found %s", string(virtualmachines.StorageAccountTypesPremiumLRS), c.OSDiskStorageAccountType)
 				}
-				if c.OSDiskCacheType != string(hashiVMSDK.CachingTypesReadOnly) {
-					t.Errorf("Expected OSDiskCacheType to be %s, but found %s", string(hashiVMSDK.CachingTypesReadOnly), c.OSDiskCacheType)
+				if c.OSDiskCacheType != string(virtualmachines.CachingTypesReadOnly) {
+					t.Errorf("Expected OSDiskCacheType to be %s, but found %s", string(virtualmachines.CachingTypesReadOnly), c.OSDiskCacheType)
 				}
-				if c.ImageHyperVGeneration != string(hashiVMSDK.HyperVGenerationTypeVOne) {
-					t.Errorf("Expected ImageHyperVGeneration to be %s, but found %s", string(hashiVMSDK.HyperVGenerationTypeVOne), c.ImageHyperVGeneration)
+				if c.ImageHyperVGeneration != string(virtualmachines.HyperVGenerationTypeVOne) {
+					t.Errorf("Expected ImageHyperVGeneration to be %s, but found %s", string(virtualmachines.HyperVGenerationTypeVOne), c.ImageHyperVGeneration)
 				}
 			},
 		},

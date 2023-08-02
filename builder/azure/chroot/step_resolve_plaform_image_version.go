@@ -9,7 +9,7 @@ import (
 	"log"
 	"strings"
 
-	hashiVMImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachineimages"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachineimages"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -20,7 +20,7 @@ type StepResolvePlatformImageVersion struct {
 	*client.PlatformImage
 	ResourceGroupName string
 	Location          string
-	list              func(context.Context, client.AzureClientSet, hashiVMImagesSDK.SkuId, hashiVMImagesSDK.ListOperationOptions) (*[]hashiVMImagesSDK.VirtualMachineImageResource, error)
+	list              func(context.Context, client.AzureClientSet, virtualmachineimages.SkuId, virtualmachineimages.ListOperationOptions) (*[]virtualmachineimages.VirtualMachineImageResource, error)
 }
 
 func NewStepResolvePlatformImageVersion(step *StepResolvePlatformImageVersion) *StepResolvePlatformImageVersion {
@@ -36,13 +36,13 @@ func (pi *StepResolvePlatformImageVersion) Run(ctx context.Context, state multis
 		azcli := state.Get("azureclient").(client.AzureClientSet)
 
 		//vmi, err := azcli.VirtualMachineImagesClient().GetLatest(ctx, pi.Publisher, pi.Offer, pi.Sku, pi.Location)
-		vmMachineImagesSKUID := hashiVMImagesSDK.NewSkuID(azcli.SubscriptionID(), pi.Location, pi.Publisher, pi.Offer, pi.Sku)
+		vmMachineImagesSKUID := virtualmachineimages.NewSkuID(azcli.SubscriptionID(), pi.Location, pi.Publisher, pi.Offer, pi.Sku)
 		orderBy := "name desc"
 		vmList, err := pi.list(
 			ctx,
 			azcli,
 			vmMachineImagesSKUID,
-			hashiVMImagesSDK.ListOperationOptions{
+			virtualmachineimages.ListOperationOptions{
 				Orderby: &orderBy,
 			},
 		)
@@ -69,7 +69,7 @@ func (pi *StepResolvePlatformImageVersion) Run(ctx context.Context, state multis
 
 	return multistep.ActionContinue
 }
-func (s *StepResolvePlatformImageVersion) listVMImages(ctx context.Context, azcli client.AzureClientSet, skuID hashiVMImagesSDK.SkuId, operations hashiVMImagesSDK.ListOperationOptions) (*[]hashiVMImagesSDK.VirtualMachineImageResource, error) {
+func (s *StepResolvePlatformImageVersion) listVMImages(ctx context.Context, azcli client.AzureClientSet, skuID virtualmachineimages.SkuId, operations virtualmachineimages.ListOperationOptions) (*[]virtualmachineimages.VirtualMachineImageResource, error) {
 	result, err := azcli.VirtualMachineImagesClient().List(
 		ctx,
 		skuID,

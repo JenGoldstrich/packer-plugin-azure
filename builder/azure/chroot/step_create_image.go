@@ -9,7 +9,7 @@ import (
 	"log"
 	"sort"
 
-	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
@@ -27,7 +27,7 @@ type StepCreateImage struct {
 	DataDiskCacheType          string
 	Location                   string
 
-	create func(ctx context.Context, client client.AzureClientSet, id hashiImagesSDK.ImageId, image hashiImagesSDK.Image) error
+	create func(ctx context.Context, client client.AzureClientSet, id images.ImageId, image images.Image) error
 }
 
 func NewStepCreateImage(step *StepCreateImage) *StepCreateImage {
@@ -56,16 +56,16 @@ func (s *StepCreateImage) Run(ctx context.Context, state multistep.StateBag) mul
 		return multistep.ActionHalt
 	}
 
-	storageAccountType := hashiImagesSDK.StorageAccountTypes(s.OSDiskStorageAccountType)
-	cacheingType := hashiImagesSDK.CachingTypes(s.OSDiskCacheType)
-	image := hashiImagesSDK.Image{
+	storageAccountType := images.StorageAccountTypes(s.OSDiskStorageAccountType)
+	cacheingType := images.CachingTypes(s.OSDiskCacheType)
+	image := images.Image{
 		Location: s.Location,
-		Properties: &hashiImagesSDK.ImageProperties{
-			StorageProfile: &hashiImagesSDK.ImageStorageProfile{
-				OsDisk: &hashiImagesSDK.ImageOSDisk{
-					OsState: hashiImagesSDK.OperatingSystemStateTypes(s.ImageOSState),
-					OsType:  hashiImagesSDK.OperatingSystemTypesLinux,
-					ManagedDisk: &hashiImagesSDK.SubResource{
+		Properties: &images.ImageProperties{
+			StorageProfile: &images.ImageStorageProfile{
+				OsDisk: &images.ImageOSDisk{
+					OsState: images.OperatingSystemStateTypes(s.ImageOSState),
+					OsType:  images.OperatingSystemTypesLinux,
+					ManagedDisk: &images.SubResource{
 						Id: &diskResourceID,
 					},
 					StorageAccountType: &storageAccountType,
@@ -75,18 +75,18 @@ func (s *StepCreateImage) Run(ctx context.Context, state multistep.StateBag) mul
 		},
 	}
 
-	var datadisks []hashiImagesSDK.ImageDataDisk
+	var datadisks []images.ImageDataDisk
 	if len(diskset) > 0 {
-		storageAccountType = hashiImagesSDK.StorageAccountTypes(s.DataDiskStorageAccountType)
-		cacheingType = hashiImagesSDK.CachingTypes(s.DataDiskStorageAccountType)
+		storageAccountType = images.StorageAccountTypes(s.DataDiskStorageAccountType)
+		cacheingType = images.CachingTypes(s.DataDiskStorageAccountType)
 	}
 	for lun, resource := range diskset {
 		if lun != -1 {
 			ui.Say(fmt.Sprintf("   using %q for data disk (lun %d).", resource, lun))
 
-			datadisks = append(datadisks, hashiImagesSDK.ImageDataDisk{
+			datadisks = append(datadisks, images.ImageDataDisk{
 				Lun:                lun,
-				ManagedDisk:        &hashiImagesSDK.SubResource{Id: common.StringPtr(resource.String())},
+				ManagedDisk:        &images.SubResource{Id: common.StringPtr(resource.String())},
 				StorageAccountType: &storageAccountType,
 				Caching:            &cacheingType,
 			})
@@ -99,7 +99,7 @@ func (s *StepCreateImage) Run(ctx context.Context, state multistep.StateBag) mul
 		image.Properties.StorageProfile.DataDisks = &datadisks
 	}
 
-	id := hashiImagesSDK.NewImageID(azcli.SubscriptionID(), imageResource.ResourceGroup, imageResource.ResourceName.String())
+	id := images.NewImageID(azcli.SubscriptionID(), imageResource.ResourceGroup, imageResource.ResourceName.String())
 	err = s.create(
 		ctx,
 		azcli,
@@ -118,7 +118,7 @@ func (s *StepCreateImage) Run(ctx context.Context, state multistep.StateBag) mul
 	return multistep.ActionContinue
 }
 
-func (s *StepCreateImage) createImage(ctx context.Context, client client.AzureClientSet, id hashiImagesSDK.ImageId, image hashiImagesSDK.Image) error {
+func (s *StepCreateImage) createImage(ctx context.Context, client client.AzureClientSet, id images.ImageId, image images.Image) error {
 	return client.ImagesClient().CreateOrUpdateThenPoll(ctx, id, image)
 }
 

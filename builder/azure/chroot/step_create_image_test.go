@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"testing"
 
-	hashiImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -57,10 +57,10 @@ func TestStepCreateImage_Run(t *testing.T) {
 		state.Put("azureclient", &client.AzureClientSetMock{SubscriptionIDMock: subscriptionID})
 		state.Put("ui", packersdk.TestUi(t))
 		state.Put(stateBagKey_Diskset, tt.diskset)
-		expectedImageID := hashiImagesSDK.NewImageID(subscriptionID, resourceGroup, imageName)
+		expectedImageID := images.NewImageID(subscriptionID, resourceGroup, imageName)
 		t.Run(tt.name, func(t *testing.T) {
-			var actualImageID hashiImagesSDK.ImageId
-			var actualImage hashiImagesSDK.Image
+			var actualImageID images.ImageId
+			var actualImage images.Image
 			s := &StepCreateImage{
 				ImageResourceID:            tt.fields.ImageResourceID,
 				ImageOSState:               tt.fields.ImageOSState,
@@ -69,7 +69,7 @@ func TestStepCreateImage_Run(t *testing.T) {
 				DataDiskStorageAccountType: tt.fields.DataDiskStorageAccountType,
 				DataDiskCacheType:          tt.fields.DataDiskCacheType,
 				Location:                   tt.fields.Location,
-				create: func(ctx context.Context, client client.AzureClientSet, id hashiImagesSDK.ImageId, image hashiImagesSDK.Image) error {
+				create: func(ctx context.Context, client client.AzureClientSet, id images.ImageId, image images.Image) error {
 					actualImageID = id
 					actualImage = image
 					return nil

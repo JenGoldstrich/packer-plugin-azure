@@ -9,7 +9,7 @@ import (
 	"log"
 	"sort"
 
-	hashiGalleryImageVersionsSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryimageversions"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common"
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
@@ -22,7 +22,7 @@ type StepCreateSharedImageVersion struct {
 	DataDiskCacheType string
 	Location          string
 
-	create func(context.Context, client.AzureClientSet, hashiGalleryImageVersionsSDK.ImageVersionId, hashiGalleryImageVersionsSDK.GalleryImageVersion) error
+	create func(context.Context, client.AzureClientSet, galleryimageversions.ImageVersionId, galleryimageversions.GalleryImageVersion) error
 }
 
 func NewStepCreateSharedImageVersion(step *StepCreateSharedImageVersion) *StepCreateSharedImageVersion {
@@ -39,11 +39,11 @@ func (s *StepCreateSharedImageVersion) Run(ctx context.Context, state multistep.
 		s.Destination.ResourceID(azcli.SubscriptionID()),
 		snapshotset.OS()))
 
-	var targetRegions []hashiGalleryImageVersionsSDK.TargetRegion
+	var targetRegions []galleryimageversions.TargetRegion
 	// transform target regions to API objects
 	for _, tr := range s.Destination.TargetRegions {
-		trStorageAccountType := hashiGalleryImageVersionsSDK.StorageAccountType(tr.StorageAccountType)
-		apiObject := hashiGalleryImageVersionsSDK.TargetRegion{
+		trStorageAccountType := galleryimageversions.StorageAccountType(tr.StorageAccountType)
+		apiObject := galleryimageversions.TargetRegion{
 			Name:                 tr.Name,
 			RegionalReplicaCount: &tr.ReplicaCount,
 			StorageAccountType:   &trStorageAccountType,
@@ -52,32 +52,32 @@ func (s *StepCreateSharedImageVersion) Run(ctx context.Context, state multistep.
 	}
 
 	osDiskSource := snapshotset.OS().String()
-	hostCaching := hashiGalleryImageVersionsSDK.HostCaching(s.OSDiskCacheType)
-	imageVersion := hashiGalleryImageVersionsSDK.GalleryImageVersion{
+	hostCaching := galleryimageversions.HostCaching(s.OSDiskCacheType)
+	imageVersion := galleryimageversions.GalleryImageVersion{
 		Location: s.Location,
-		Properties: &hashiGalleryImageVersionsSDK.GalleryImageVersionProperties{
-			StorageProfile: hashiGalleryImageVersionsSDK.GalleryImageVersionStorageProfile{
-				OsDiskImage: &hashiGalleryImageVersionsSDK.GalleryDiskImage{
-					Source:      &hashiGalleryImageVersionsSDK.GalleryDiskImageSource{Id: &osDiskSource},
+		Properties: &galleryimageversions.GalleryImageVersionProperties{
+			StorageProfile: galleryimageversions.GalleryImageVersionStorageProfile{
+				OsDiskImage: &galleryimageversions.GalleryDiskImage{
+					Source:      &galleryimageversions.GalleryDiskImageSource{Id: &osDiskSource},
 					HostCaching: &hostCaching,
 				},
 			},
-			PublishingProfile: &hashiGalleryImageVersionsSDK.GalleryArtifactPublishingProfileBase{
+			PublishingProfile: &galleryimageversions.GalleryArtifactPublishingProfileBase{
 				TargetRegions:     &targetRegions,
 				ExcludeFromLatest: common.BoolPtr(s.Destination.ExcludeFromLatest),
 			},
 		},
 	}
 
-	var datadisks []hashiGalleryImageVersionsSDK.GalleryDataDiskImage
+	var datadisks []galleryimageversions.GalleryDataDiskImage
 	for lun, resource := range snapshotset {
 		if lun != -1 {
 			ui.Say(fmt.Sprintf("   using %q for data disk (lun %d).", resource, lun))
 
-			hostCaching := hashiGalleryImageVersionsSDK.HostCaching(s.DataDiskCacheType)
-			datadisks = append(datadisks, hashiGalleryImageVersionsSDK.GalleryDataDiskImage{
+			hostCaching := galleryimageversions.HostCaching(s.DataDiskCacheType)
+			datadisks = append(datadisks, galleryimageversions.GalleryDataDiskImage{
 				Lun:         lun,
-				Source:      &hashiGalleryImageVersionsSDK.GalleryDiskImageSource{Id: common.StringPtr(resource.String())},
+				Source:      &galleryimageversions.GalleryDiskImageSource{Id: common.StringPtr(resource.String())},
 				HostCaching: &hostCaching,
 			})
 		}
@@ -90,7 +90,7 @@ func (s *StepCreateSharedImageVersion) Run(ctx context.Context, state multistep.
 		imageVersion.Properties.StorageProfile.DataDiskImages = &datadisks
 	}
 
-	galleryImageVersionID := hashiGalleryImageVersionsSDK.NewImageVersionID(
+	galleryImageVersionID := galleryimageversions.NewImageVersionID(
 		azcli.SubscriptionID(),
 		s.Destination.ResourceGroup,
 		s.Destination.GalleryName,
@@ -115,7 +115,7 @@ func (s *StepCreateSharedImageVersion) Run(ctx context.Context, state multistep.
 	return multistep.ActionContinue
 }
 
-func (s *StepCreateSharedImageVersion) createImageVersion(ctx context.Context, azcli client.AzureClientSet, galleryImageVersionID hashiGalleryImageVersionsSDK.ImageVersionId, imageVersion hashiGalleryImageVersionsSDK.GalleryImageVersion) error {
+func (s *StepCreateSharedImageVersion) createImageVersion(ctx context.Context, azcli client.AzureClientSet, galleryImageVersionID galleryimageversions.ImageVersionId, imageVersion galleryimageversions.GalleryImageVersion) error {
 	return azcli.GalleryImageVersionsClient().CreateOrUpdateThenPoll(
 		ctx,
 		galleryImageVersionID,

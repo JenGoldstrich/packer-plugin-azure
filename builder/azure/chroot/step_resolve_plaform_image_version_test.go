@@ -11,20 +11,20 @@ import (
 	"github.com/hashicorp/packer-plugin-azure/builder/azure/common/client"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 
-	hashiVMImagesSDK "github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachineimages"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/virtualmachineimages"
 )
 
 func TestStepResolvePlatformImageVersion_Run(t *testing.T) {
 
-	var expectedSkuId, actualSkuId hashiVMImagesSDK.SkuId
+	var expectedSkuId, actualSkuId virtualmachineimages.SkuId
 	expectedSku := "Linux"
 	expectedOffer := "Offer"
 	expectedPublisher := "Arch"
 	subscriptionID := "1234"
 	expectedLocation := "linuxland"
-	expectedSkuId = hashiVMImagesSDK.NewSkuID(subscriptionID, expectedLocation, expectedPublisher, expectedOffer, expectedSku)
-	var actualListOperations hashiVMImagesSDK.ListOperationOptions
-	returnedVMImages := []hashiVMImagesSDK.VirtualMachineImageResource{
+	expectedSkuId = virtualmachineimages.NewSkuID(subscriptionID, expectedLocation, expectedPublisher, expectedOffer, expectedSku)
+	var actualListOperations virtualmachineimages.ListOperationOptions
+	returnedVMImages := []virtualmachineimages.VirtualMachineImageResource{
 		{
 			Name: "1.2.3",
 		},
@@ -40,7 +40,7 @@ func TestStepResolvePlatformImageVersion_Run(t *testing.T) {
 			Publisher: expectedPublisher,
 		},
 		Location: expectedLocation,
-		list: func(ctx context.Context, azcli client.AzureClientSet, skuID hashiVMImagesSDK.SkuId, operations hashiVMImagesSDK.ListOperationOptions) (*[]hashiVMImagesSDK.VirtualMachineImageResource, error) {
+		list: func(ctx context.Context, azcli client.AzureClientSet, skuID virtualmachineimages.SkuId, operations virtualmachineimages.ListOperationOptions) (*[]virtualmachineimages.VirtualMachineImageResource, error) {
 
 			actualSkuId = skuID
 			actualListOperations = operations
