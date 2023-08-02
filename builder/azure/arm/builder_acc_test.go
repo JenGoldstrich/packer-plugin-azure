@@ -558,36 +558,6 @@ const testBuilderAccManagedDiskWindowsBuildResourceGroupAdditionalDisk = `
 }
 `
 
-const testBuilderAccManagedDiskWindowsDeviceLogin = `
-{
-	"variables": {
-	  "subscription_id": "{{env ` + "`ARM_SUBSCRIPTION_ID`" + `}}"
-	},
-	"builders": [{
-	  "type": "azure-arm",
-
-	  "subscription_id": "{{user ` + "`subscription_id`" + `}}",
-
-	  "managed_image_resource_group_name": "packer-acceptance-test",
-	  "managed_image_name": "testBuilderAccManagedDiskWindowsDeviceLogin-{{timestamp}}",
-
-	  "os_type": "Windows",
-	  "image_publisher": "MicrosoftWindowsServer",
-	  "image_offer": "WindowsServer",
-	  "image_sku": "2012-R2-Datacenter",
-
-	  "communicator": "winrm",
-	  "winrm_use_ssl": "true",
-	  "winrm_insecure": "true",
-	  "winrm_timeout": "3m",
-	  "winrm_username": "packer",
-
-	  "location": "South Central US",
-	  "vm_size": "Standard_DS2_v2"
-	}]
-}
-`
-
 const testBuilderAccManagedDiskLinux = `
 {
 	"variables": {
@@ -616,31 +586,6 @@ const testBuilderAccManagedDiskLinux = `
 	    "env": "testing",
 	    "builder": "packer"
 	   }
-	}]
-}
-`
-
-const testBuilderAccManagedDiskLinuxDeviceLogin = `
-{
-	"variables": {
-	  "subscription_id": "{{env ` + "`ARM_SUBSCRIPTION_ID`" + `}}"
-	},
-	"builders": [{
-	  "type": "azure-arm",
-
-	  "subscription_id": "{{user ` + "`subscription_id`" + `}}",
-
-	  "managed_image_resource_group_name": "packer-acceptance-test",
-	  "managed_image_name": "testBuilderAccManagedDiskLinuxDeviceLogin-{{timestamp}}",
-
-	  "os_type": "Linux",
-	  "image_publisher": "Canonical",
-	  "image_offer": "UbuntuServer",
-	  "image_sku": "16.04-LTS",
-	  "async_resourcegroup_delete": "true",
-
-	  "location": "South Central US",
-	  "vm_size": "Standard_DS2_v2"
 	}]
 }
 `
