@@ -102,7 +102,7 @@ func Test_StepVerifySourceDisk_Run(t *testing.T) {
 				Location:             tt.fields.Location,
 				get: func(ctx context.Context, azcli client.AzureClientSet, id hashiDisksSDK.DiskId) (*hashiDisksSDK.Disk, error) {
 					if tt.fields.GetDiskError == nil && tt.fields.GetDiskResponse == nil {
-						t.Fatalf("expected getDisk to not be caled but it was")
+						t.Fatalf("expected getDisk to not be called but it was")
 					}
 					return tt.fields.GetDiskResponse, tt.fields.GetDiskError
 				},
