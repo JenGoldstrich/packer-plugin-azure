@@ -326,8 +326,6 @@ func getIDsFromAzureCLI() (string, string, error) {
 	return "", "", errors.New("Unable to find default subscription")
 }
 
-
-
 func FindTenantID(env environments.Environment, subscriptionID string) (string, error) {
 	const hdrKey = "WWW-Authenticate"
 	resourceManagerEndpoint, _ := env.ResourceManager.Endpoint()
