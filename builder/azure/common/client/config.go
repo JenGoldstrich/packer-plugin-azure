@@ -7,6 +7,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/go-autorest/autorest/azure/cli"
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/resources/2022-12-01/subscriptions"
@@ -277,6 +279,16 @@ func (c *Config) FillParameters() error {
 		}
 	}
 
+	if c.authType == AuthTypeAzureCLI {
+		tenantID, subscriptionID, err := getIDsFromAzureCLI()
+		if err != nil {
+			return fmt.Errorf("error fetching tenantID and subscriptionID from Azure CLI (are you logged on using `az login`?): %v", err)
+		}
+
+		c.TenantID = tenantID
+		c.SubscriptionID = subscriptionID
+	}
+
 	// CLI Auth does not require tenant, SDK parses that for us
 	if c.TenantID == "" && !c.UseAzureCLIAuth {
 		tenantID, err := findTenantID(*c.cloudEnvironment, c.SubscriptionID)
@@ -292,6 +304,29 @@ func (c *Config) FillParameters() error {
 
 	return nil
 }
+
+// getIDsFromAzureCLI returns the TenantID and SubscriptionID from an active Azure CLI login session
+func getIDsFromAzureCLI() (string, string, error) {
+	profilePath, err := cli.ProfilePath()
+	if err != nil {
+		return "", "", err
+	}
+
+	profile, err := cli.LoadProfile(profilePath)
+	if err != nil {
+		return "", "", err
+	}
+
+	for _, p := range profile.Subscriptions {
+		if p.IsDefault {
+			return p.TenantID, p.ID, nil
+		}
+	}
+
+	return "", "", errors.New("Unable to find default subscription")
+}
+
+
 
 func FindTenantID(env environments.Environment, subscriptionID string) (string, error) {
 	const hdrKey = "WWW-Authenticate"
