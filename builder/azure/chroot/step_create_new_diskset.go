@@ -142,7 +142,7 @@ func (s *StepCreateNewDiskset) Run(ctx context.Context, state multistep.StateBag
 	for _, f := range futures {
 		error := f.LongRunningPoller.PollUntilDone()
 		if error != nil {
-			return errorMessage("Failed to create resource %q", f.Resource)
+			return errorMessage("Failed to create resource %q error %s", f.Resource, error)
 		}
 		ui.Say(fmt.Sprintf("Disk %q created", f.Resource))
 	}

@@ -5,9 +5,11 @@ package chroot
 
 import (
 	"context"
+	"net/http"
 	"reflect"
 	"testing"
 
+	"github.com/Azure/go-autorest/autorest"
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/go-azure-helpers/polling"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
@@ -253,8 +255,11 @@ func TestStepCreateNewDisk_Run(t *testing.T) {
 						t.Fatalf("unexpected disk for call %d diff %s", bodyCount+1, diff)
 					}
 					bodyCount++
-
-					return polling.LongRunningPoller{}, nil
+					future, err := polling.NewPollerFromResponse(context.TODO(), &http.Response{Request: &http.Request{Method: http.MethodDelete}, StatusCode: 200}, autorest.Client{}, "DELETE")
+					if err != nil {
+						t.Fatalf("%s", err)
+					}
+					return future, nil
 				},
 			}
 
