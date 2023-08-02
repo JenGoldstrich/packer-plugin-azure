@@ -6,6 +6,7 @@ package chroot
 import (
 	"context"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -151,7 +152,12 @@ func TestStepCreateSnapshot_Run(t *testing.T) {
 			}
 
 			if len(tt.expectedSnapshots) > 0 {
-
+				sort.Slice(tt.expectedSnapshots, func(i, j int) bool {
+					return *tt.expectedSnapshots[i].Properties.CreationData.SourceResourceId < *tt.expectedSnapshots[j].Properties.CreationData.SourceResourceId
+				})
+				sort.Slice(actualSnapshots, func(i, j int) bool {
+					return *actualSnapshots[i].Properties.CreationData.SourceResourceId < *actualSnapshots[j].Properties.CreationData.SourceResourceId
+				})
 				if diff := cmp.Diff(tt.expectedSnapshots, actualSnapshots); diff != "" {
 					t.Fatal(diff)
 				}

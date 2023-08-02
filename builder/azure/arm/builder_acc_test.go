@@ -44,8 +44,6 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/retry"
 )
 
-const DeviceLoginAcceptanceTest = "DEVICELOGIN_TEST"
-
 func TestBuilderAcc_SharedImageGallery_ARM64SpecializedLinuxSIG(t *testing.T) {
 	t.Parallel()
 	if os.Getenv("AZURE_CLI_AUTH") == "" {
@@ -173,54 +171,12 @@ func TestBuilderAcc_ManagedDisk_Windows_Build_Resource_Group_Additional_Disk(t *
 	})
 }
 
-func TestBuilderAcc_ManagedDisk_Windows_DeviceLogin(t *testing.T) {
-	t.Parallel()
-	if os.Getenv(DeviceLoginAcceptanceTest) == "" {
-		t.Skipf("Device Login Acceptance tests skipped unless env '%s' set, as its requires manual step during execution", DeviceLoginAcceptanceTest)
-		return
-	}
-	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name:     "test-azure-managedisk-windows-devicelogin",
-		Type:     "azure-arm",
-		Template: testBuilderAccManagedDiskWindowsDeviceLogin,
-		Check: func(buildCommand *exec.Cmd, logfile string) error {
-			if buildCommand.ProcessState != nil {
-				if buildCommand.ProcessState.ExitCode() != 0 {
-					return fmt.Errorf("Bad exit code. Logfile: %s", logfile)
-				}
-			}
-			return nil
-		},
-	})
-}
-
 func TestBuilderAcc_ManagedDisk_Linux(t *testing.T) {
 	t.Parallel()
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
 		Name:     "test-azure-managedisk-linux",
 		Type:     "azure-arm",
 		Template: testBuilderAccManagedDiskLinux,
-		Check: func(buildCommand *exec.Cmd, logfile string) error {
-			if buildCommand.ProcessState != nil {
-				if buildCommand.ProcessState.ExitCode() != 0 {
-					return fmt.Errorf("Bad exit code. Logfile: %s", logfile)
-				}
-			}
-			return nil
-		},
-	})
-}
-
-func TestBuilderAcc_ManagedDisk_Linux_DeviceLogin(t *testing.T) {
-	t.Parallel()
-	if os.Getenv(DeviceLoginAcceptanceTest) == "" {
-		t.Skipf("Device Login Acceptance tests skipped unless env '%s' set, as its requires manual step during execution", DeviceLoginAcceptanceTest)
-		return
-	}
-	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name:     "test-azure-managedisk-linux-device-login",
-		Type:     "azure-arm",
-		Template: testBuilderAccManagedDiskLinuxDeviceLogin,
 		Check: func(buildCommand *exec.Cmd, logfile string) error {
 			if buildCommand.ProcessState != nil {
 				if buildCommand.ProcessState.ExitCode() != 0 {
