@@ -511,7 +511,7 @@ func TestKeyVaultDeployment00(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	deployment, err := GetKeyVaultDeployment(&c, "secret")
+	deployment, err := GetKeyVaultDeployment(&c, "secret", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -544,7 +544,7 @@ func TestKeyVaultDeployment01(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	deployment, err := GetKeyVaultDeployment(&c, "secret")
+	deployment, err := GetKeyVaultDeployment(&c, "secret", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -562,7 +562,7 @@ func TestKeyVaultDeployment02(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	deployment, err := GetKeyVaultDeployment(&c, c.winrmCertificate)
+	deployment, err := GetKeyVaultDeployment(&c, c.winrmCertificate, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -638,7 +638,25 @@ func TestKeyVaultDeployment03(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	deployment, err := GetKeyVaultDeployment(&c, c.winrmCertificate)
+	deployment, err := GetKeyVaultDeployment(&c, c.winrmCertificate, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	approvaltests.VerifyJSONStruct(t, deployment.Properties.Template)
+}
+
+// Ensure the KeyVault template is correct when tags are supplied.
+func TestKeyVaultDeployment04(t *testing.T) {
+
+	var c Config
+	_, err := c.Prepare(getArmBuilderConfigurationWithWindows(), getPackerConfiguration())
+	if err != nil {
+		t.Fatal(err)
+	}
+	// January 1st 2100
+	expiry := int64(4102444800)
+	deployment, err := GetKeyVaultDeployment(&c, c.winrmCertificate, &expiry)
 	if err != nil {
 		t.Fatal(err)
 	}
